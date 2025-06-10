@@ -1,0 +1,3 @@
+.venv/
+dataToolBox/__pycache__/
+dataToolBox/dataToolBox.egg-info/
