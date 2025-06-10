@@ -15,7 +15,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import warnings
 
-from dataToolBox.display import load_dataframe
 warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
 
 # Configuration de la page
