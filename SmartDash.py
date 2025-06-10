@@ -227,8 +227,12 @@ def create_emissions_chart(annees, emissions_par_vecteur, title="Émissions carb
 
 @st.cache_data
 def load_sample_data():
-    """Génère des données d'exemple basées sur votre structure city_renovated"""
-    city = load_dataframe("city_file.pkl")
+    """Charge et concatène les trois parties du fichier city_file."""
+    part1 = pd.read_pickle("city_part1.pkl")
+    part2 = pd.read_pickle("city_part2.pkl")
+    part3 = pd.read_pickle("city_part3.pkl")
+
+    city = pd.concat([part1, part2, part3], ignore_index=True)
     return city
 
 # =========================
