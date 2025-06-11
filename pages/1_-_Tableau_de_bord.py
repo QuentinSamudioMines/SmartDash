@@ -59,6 +59,10 @@ facteurs_carbone = {
     "chauffage urbain": np.linspace(0.3, 0.2, n_annees),
     "autre": np.full(n_annees, 0.150),
     "mixte": np.full(n_annees, 0.100),
+    "PAC Air-Air": electricity_carbone_factor,
+    "PAC Air-Eau": electricity_carbone_factor,
+    "PAC Eau-Eau": electricity_carbone_factor,
+    "PAC Géothermique": electricity_carbone_factor,
 }
 
 # =========================
@@ -80,13 +84,15 @@ def substitute_energy(df, source_vec, target_vec, year_index, total_years, max_s
     
     # Mise à jour des consommations
     df[source_vec] -= energy_to_substitute
+    if target_vec not in df:
+        df[target_vec] = 0.0
     df[target_vec] += substituted_energy
     
     return df
 
 def calculate_heating_efficiencies(df):
     """Calcule les rendements moyens de chauffage par type d'énergie."""
-    efficiencies = {"PAC Air-Air" : 3.0, "PAC Air-Eau" : 3.0, "PAC Eau-Eau" : 4.0, "PAC Géothermique" : 5.}
+    efficiencies = {}
     for vec in df["energie_imope"].unique():
         mean_efficiency = df[df["energie_imope"] == vec]["heating_efficiency"].mean()
         efficiencies[vec] = mean_efficiency
@@ -230,8 +236,16 @@ def load_sample_data():
     part1 = pd.read_pickle("city_part1.pkl")
     part2 = pd.read_pickle("city_part2.pkl")
     part3 = pd.read_pickle("city_part3.pkl")
+    #"PAC Air-Air" : 3, "PAC Air-Eau" : 3, "PAC Eau-Eau" : 4, "PAC Géothermique" : 5
+    part4 = pd.DataFrame({
+        "total_energy_consumption_basic": [0, 0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0],
+        "total_energy_consumption_renovated": [0, 0, 0, 0],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Eau-Eau", "PAC Géothermique"],
+        "heating_efficiency": [3.0, 3.0, 4.0, 5.0]
+    })  # Ajout d'une ligne vide pour éviter les erreurs de concaténation
 
-    city = pd.concat([part1, part2, part3], ignore_index=True)
+    city = pd.concat([part1, part2, part3,part4], ignore_index=True)
     return city
 
 # =========================
@@ -391,7 +405,7 @@ def main():
             )
             target = st.selectbox(
                 "Énergie de remplacement",
-                options=[e for e in original_profile.keys() if e != source],
+                options=[e for e in heating_efficiency_map.keys() if e != source],
                 index=0,  # Électricité par défaut
                 key="sub_target",
                 help="Nouvelle énergie qui remplacera la source"
