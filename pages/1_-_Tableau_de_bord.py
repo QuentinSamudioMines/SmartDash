@@ -86,7 +86,7 @@ def substitute_energy(df, source_vec, target_vec, year_index, total_years, max_s
 
 def calculate_heating_efficiencies(df):
     """Calcule les rendements moyens de chauffage par type d'énergie."""
-    efficiencies = {}
+    efficiencies = {"PAC Air-Air" : 3.0, "PAC Air-Eau" : 3.0, "PAC Eau-Eau" : 4.0, "PAC Géothermique" : 5.}
     for vec in df["energie_imope"].unique():
         mean_efficiency = df[df["energie_imope"] == vec]["heating_efficiency"].mean()
         efficiencies[vec] = mean_efficiency
