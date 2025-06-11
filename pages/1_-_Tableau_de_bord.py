@@ -262,8 +262,7 @@ def main():
     
     # Bannière d'introduction
     st.markdown("""
-    <div style="background-color:#f0f2f6;padding:20px;border-radius:10px;margin-bottom:20px">
-    <h3 style="color:#1e3a8a;margin-top:0;"> Optimisez votre stratégie de rénovation énergétique</h3>
+    <h3> Optimisez votre stratégie de rénovation énergétique</h3>
     <p>Cet outil permet de simuler différents scénarios de rénovation du parc immobilier et d'analyser leur impact sur :</p>
     <ul>
         <li>Les <b>consommations énergétiques</b> (MWh)</li>
