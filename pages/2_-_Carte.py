@@ -33,10 +33,10 @@ else:
             'Zone 8': '#fece7c',
             'Zone 10': '#006837',
         }
-        st.subheader("Légende des couleurs :")
-        for zone, color in legend.items():
-            st.markdown(f"- <span style='color:{color}'>■</span> **{zone}**", unsafe_allow_html=True)
-        st.markdown("---")
+        #st.subheader("Légende des couleurs :")
+        #for zone, color in legend.items():
+        #    st.markdown(f"- <span style='color:{color}'>■</span> **{zone}**", unsafe_allow_html=True)
+        #st.markdown("---")
         for map_file in map_files:
             st.subheader(map_file.stem)
             # Chargement du fichier HTML dans un iframe

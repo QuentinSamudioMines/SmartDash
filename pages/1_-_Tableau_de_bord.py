@@ -241,6 +241,7 @@ def load_sample_data():
         "total_energy_consumption_basic": [0, 0, 0,0,0,0],
         "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0,0, 0, 0],
         "total_energy_consumption_renovated": [0, 0, 0,0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)": [0, 0, 0,0, 0, 0],
         "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
         "heating_efficiency": [3.0, 4.0, 5.0,3.0, 4.0, 5.0],
         "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT","Autre", "Autre", "Autre"],
@@ -282,9 +283,185 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_
     elif usage_selection == "Résidentiel + Tertiaire":
         pass
     return filtered_data
+    
+def get_building_consumption_distribution(df, scenario, year_index):
+    """
+    Calcule la distribution des consommations par m² pour une année donnée de la simulation.
+    
+    Args:
+        df: DataFrame des bâtiments triés selon la stratégie
+        scenario: Scénario de rénovation (array des pourcentages)
+        year_index: Index de l'année dans le scénario
+    
+    Returns:
+        dict: Distribution des consommations par m² avec statut de rénovation
+    """
+    n_batiments = len(df)
+    p = scenario[year_index] if year_index < len(scenario) else scenario[-1]
+    n_reno = int(p * n_batiments)
+    
+    # Séparer les bâtiments rénovés et non rénovés
+    df_reno = df.iloc[:n_reno]
+    df_non_reno = df.iloc[n_reno:]
 
-# =========================
-# Application Streamlit
+    # Créer un DataFrame temporaire avec les consommations
+    # Gérer les NaNs potentiels dans les colonnes sources avant concaténation
+    reno_consumption = df_reno['Consommation par m² par an (en kWh/m².an)'].fillna(0)
+    non_reno_consumption = df_non_reno['Consommation par m² par an (en kWh/m².an)_basic'].fillna(0)
+
+    df_temp = pd.DataFrame({
+        'renovated': [True] * len(df_reno) + [False] * len(df_non_reno),
+        'energy_type': pd.concat([df_reno['energie_imope'], df_non_reno['energie_imope']]),
+        'consumption_m2': pd.concat([reno_consumption, non_reno_consumption])
+    })
+
+    # Clipper les valeurs pour correspondre au range_x de l'histogramme et s'assurer que tous les bâtiments sont comptés.
+    # Le range_x dans create_dynamic_histogram est [0, 600]
+    df_temp['consumption_m2'] = df_temp['consumption_m2'].clip(lower=0, upper=600)
+
+    return {
+        'consumption_m2': df_temp['consumption_m2'].values,
+        'renovated': df_temp['renovated'].values,
+        'energy_type': df_temp['energy_type'].values,
+        'n_renovated': n_reno,
+        'n_total': n_batiments
+    }
+
+def create_evolution_chart(annees, df, scenario, title="Évolution des consommations"):
+    """
+    Préparer les données pour toutes les années
+    """
+    evolution_data = []
+    for i, year in enumerate(annees):
+        dist_data = get_building_consumption_distribution(df, scenario, i)
+        year_df = pd.DataFrame({
+            'renovated': dist_data['renovated'],
+            'energy_type': dist_data['energy_type'],
+            'year': year
+        })
+        energy_counts = year_df.groupby(['energy_type', 'renovated']).size().reset_index(name='count')
+        energy_counts['year'] = year
+        evolution_data.append(energy_counts)
+    
+    # Combiner toutes les années
+    all_evolution_df = pd.concat(evolution_data, ignore_index=True)
+    
+    # Créer le statut combiné pour la couleur
+    all_evolution_df['status_energy'] = all_evolution_df['energy_type'] + ' - ' + \
+                                       all_evolution_df['renovated'].map({True: 'Rénovés', False: 'Non rénovés'})
+    
+    # Créer le graphique
+    fig = px.area(
+        all_evolution_df,
+        x='year',
+        y='count',
+        color='status_energy',
+        title=title,
+        labels={
+            'year': 'Année',
+            'count': 'Nombre de bâtiments',
+            'status_energy': 'Type d\'énergie - Statut'
+        }
+    )
+    
+    # Personnaliser le style
+    fig.update_layout(
+        height=400,
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.05
+        ),
+        showlegend=True
+    )
+    
+    return fig
+
+def create_dynamic_histogram(df, scenario, title="Distribution des consommations par m²"):
+    """
+    Crée un histogramme animé montrant l'évolution de la distribution des consommations par m².
+    Cette version utilise un binning manuel et px.bar pour garantir une largeur de barre constante.
+    """
+    # 1. Obtenir les données pour toutes les années
+    all_data = []
+    for i, year in enumerate(annees):
+        dist_data = get_building_consumption_distribution(df, scenario, i)
+        year_df = pd.DataFrame({
+            'consumption_m2': dist_data['consumption_m2'],
+            'renovated': dist_data['renovated'],
+            'year': year
+        })
+        all_data.append(year_df)
+    full_df = pd.concat(all_data, ignore_index=True)
+
+    # 2. Définir les classes (bins) manuellement
+    bin_size = 10  # Taille de chaque classe
+    max_val = 800
+    bins = np.arange(0, max_val + bin_size, bin_size)
+    bin_labels = [f'{i}-{i+bin_size}' for i in bins[:-1]]
+
+    # 3. Assigner chaque bâtiment à une classe
+    full_df['bin'] = pd.cut(full_df['consumption_m2'], bins=bins, labels=bin_labels, right=False, include_lowest=True)
+
+    # 4. Compter les bâtiments par classe, année et statut
+    binned_counts = full_df.groupby(['year', 'bin', 'renovated']).size().reset_index(name='count')
+
+    # 5. Assurer que chaque classe existe pour chaque année (même avec un compte de 0)
+    all_years = full_df['year'].unique()
+    all_statuses = [True, False]
+    complete_grid = pd.MultiIndex.from_product(
+        [all_years, bin_labels, all_statuses],
+        names=['year', 'bin', 'renovated']
+    ).to_frame(index=False)
+
+    final_df = pd.merge(complete_grid, binned_counts, on=['year', 'bin', 'renovated'], how='left').fillna(0)
+    
+    final_df['bin'] = pd.Categorical(final_df['bin'], categories=bin_labels, ordered=True)
+    final_df.sort_values(by=['year', 'bin'], inplace=True)
+
+    # 6. Créer le graphique à barres animé avec px.bar
+    fig = px.bar(
+        final_df,
+        x='bin',
+        y='count',
+        color='renovated',
+        animation_frame='year',
+        title=title,
+        labels={
+            'bin': 'Consommation par m² (kWh/m².an)',
+            'count': 'Nombre de bâtiments',
+            'renovated': 'Statut de rénovation'
+        },
+        color_discrete_map={True: '#636EFA', False: '#EF553B'},
+        category_orders={"renovated": [False, True]} # Non-rénové en premier
+    )
+
+    # 7. Personnaliser le style
+    fig.update_layout(
+        barmode='overlay',
+        bargap=0,
+        showlegend=True,
+        legend=dict(
+            title="Statut des bâtiments",
+            orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1
+        ),
+        xaxis={'tickangle': -45} # Pivoter les étiquettes pour éviter le chevauchement
+    )
+    
+    # Appliquer une opacité pour une meilleure lisibilité en mode 'overlay'
+    for trace in fig.data:
+        if trace.name == 'False': trace.marker.opacity = 0.7
+        if trace.name == 'True': trace.marker.opacity = 0.9
+
+    for frame in fig.frames:
+        for trace in frame.data:
+            if trace.name == 'False': trace.marker.opacity = 0.7
+            if trace.name == 'True': trace.marker.opacity = 0.9
+
+    return fig
+
 # =========================
 
 def main():
@@ -420,6 +597,26 @@ def main():
     # Consommation totale avec les données filtrées
     total_consumption = sum([p['consommation_basic'] for p in original_profile.values()])
     st.sidebar.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
+
+        # Taux de rénovation avec explication
+    with st.sidebar.expander("🏗️ Taux de rénovation", expanded=False):
+        st.markdown("""
+        **Définit la proportion totale du parc immobilier qui sera rénovée d'ici 2050.**
+        - 0% = Aucune rénovation
+        - 100% = Tous les bâtiments rénovés
+        """)
+        coverage_rate = st.slider(
+            "Taux de rénovation total (2024-2050)",
+            min_value=0,
+            max_value=100,
+            value=30,
+            step=5,
+            help="Pourcentage total du parc immobilier à rénover sur la période 2024-2050"
+        )
+        
+        # Mise à jour des scénarios avec le taux de rénovation
+        for key in scenarios:
+            scenarios[key] = scenarios[key] * (coverage_rate / 100.0)
     
     # Choix de la stratégie avec explication
     with st.sidebar.expander("📌 Stratégie de rénovation", expanded=False):
@@ -533,21 +730,42 @@ def main():
         substitutions
     )
 
-    # Affichage des résultats
+    # Interface principale
     st.subheader(f"Résultats pour la stratégie: {selected_strategy} - Scénario: {selected_scenario}")
-    
-    # Graphiques de consommation et émissions
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        fig_conso = create_consumption_chart(annees, conso_par_vecteur)
-        st.plotly_chart(fig_conso, use_container_width=True)
-    
-    with col2:
-        fig_emissions = create_emissions_chart(annees, emissions_par_vecteur)
-        st.plotly_chart(fig_emissions, use_container_width=True)
-    
-    # Bilan énergétique et carbone
+    # Affichage des résultats
+    st.header("📊 Résultats de la simulation")
+
+    # Gestion persistante de l'onglet actif
+    if 'active_tab' not in st.session_state:
+        st.session_state.active_tab = "Consommation & Émissions"
+
+    # Utiliser st.radio pour simuler les onglets
+    tab_options = ["Consommation & Émissions", "Distribution des consommations"]
+    st.session_state.active_tab = st.radio(
+        "Navigation des résultats:", 
+        tab_options, 
+        index=tab_options.index(st.session_state.active_tab),
+        horizontal=True,
+        key='tab_selector' # Clé unique pour le widget radio
+    )
+
+    # Affichage conditionnel basé sur l'onglet actif
+    if st.session_state.active_tab == "Consommation & Émissions":
+        st.subheader("Consommation et émissions annuelles")
+        col1, col2 = st.columns(2)
+        with col1:
+            fig_conso = create_consumption_chart(annees, conso_par_vecteur)
+            st.plotly_chart(fig_conso, use_container_width=True)
+        with col2:
+            fig_emissions = create_emissions_chart(annees, emissions_par_vecteur)
+            st.plotly_chart(fig_emissions, use_container_width=True)
+
+    elif st.session_state.active_tab == "Distribution des consommations":
+        st.subheader("Distribution des consommations de chauffage du parc")
+        fig_distribution = create_dynamic_histogram(df_selected, scenario_selected)
+        st.plotly_chart(fig_distribution, use_container_width=True)
+
+    # Bilan énergétique et carbone (affiché en dehors des onglets, donc toujours visible)
     st.subheader("Bilan énergétique et carbone (2024-2050)")
     bilan_stats = synthesize_results(conso_par_vecteur, emissions_par_vecteur)
     
