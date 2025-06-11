@@ -238,15 +238,50 @@ def load_sample_data():
     part3 = pd.read_pickle("city_part3.pkl")
     #"PAC Air-Air" : 3, "PAC Air-Eau" : 3, "PAC Eau-Eau" : 4, "PAC Géothermique" : 5
     part4 = pd.DataFrame({
-        "total_energy_consumption_basic": [0, 0, 0, 0],
-        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0],
-        "total_energy_consumption_renovated": [0, 0, 0, 0],
-        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Eau-Eau", "PAC Géothermique"],
-        "heating_efficiency": [3.0, 3.0, 4.0, 5.0]
+        "total_energy_consumption_basic": [0, 0, 0,0,0,0],
+        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0,0, 0, 0],
+        "total_energy_consumption_renovated": [0, 0, 0,0, 0, 0],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
+        "heating_efficiency": [3.0, 4.0, 5.0,3.0, 4.0, 5.0],
+        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT","Autre", "Autre", "Autre"],
     })  # Ajout d'une ligne vide pour éviter les erreurs de concaténation
 
     city = pd.concat([part1, part2, part3,part4], ignore_index=True)
     return city
+
+
+def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_only: bool = False):
+    """
+    Filtre les données selon la sélection d'usage et optionnellement sur les bâtiments CUD.
+    
+    Args:
+        city_data: DataFrame contenant toutes les données
+        usage_selection: "Résidentiel uniquement" ou "Résidentiel + Tertiaire"
+        cud_only: Si True, ne garde que les bâtiments CUD
+    
+    Returns:
+        pd.DataFrame: Données filtrées
+    """
+    # Filtre CUD si demandé (supposant qu'il existe une colonne 'is_cud' ou similaire)
+    if cud_only:
+        if 'is_cud' in city_data.columns:
+            filtered_data = city_data[city_data['is_cud'] == True].copy()
+        else:
+            # Si la colonne n'existe pas, on peut utiliser d'autres critères
+            # Par exemple, si les bâtiments CUD ont un identifiant spécifique
+            st.warning("⚠️ En développement : filtre CUD non disponible. Toutes les données seront utilisées.")
+            filtered_data = city_data.copy()
+    else:
+        filtered_data = city_data.copy()
+    
+    # Filtre par type d'usage
+    if usage_selection == "Résidentiel":
+        filtered_data = filtered_data[filtered_data["UseType"] == "LOGEMENT"]
+    elif usage_selection == "Tertiaire":
+        filtered_data = filtered_data[filtered_data["UseType"] != "LOGEMENT"]
+    elif usage_selection == "Résidentiel + Tertiaire":
+        pass
+    return filtered_data
 
 # =========================
 # Application Streamlit
@@ -258,8 +293,8 @@ def main():
     with col_logo:
         st.image("images/logo.png", width=140)
     with col_title:
-        st.title("SmartE - Simulateur Rénovation Énergétique")
-    
+        st.title("SmartE - Étude de la transition énergétique du parc immobilier de la CUD")
+
     # Bannière d'introduction
     st.markdown("""
     <h3> Optimisez votre stratégie de rénovation énergétique</h3>
@@ -276,11 +311,13 @@ def main():
     # Section "Comment ça marche"
     with st.expander("ℹ️ Comment utiliser ce simulateur", expanded=False):
         st.markdown("""
-        1. **Paramétrez** votre simulation dans la barre latérale ←
-        2. **Visualisez** les résultats en temps réel
-        3. **Comparez** différents scénarios
+        1. **Sélectionnez** le périmètre d'étude (résidentiel seul ou avec tertiaire)
+        2. **Paramétrez** votre simulation dans la barre latérale ←
+        3. **Visualisez** les résultats en temps réel
+        4. **Comparez** différents scénarios
         
         ### Concepts clés :
+        - **Périmètre d'étude** : Type de bâtiments inclus dans l'analyse
         - **Stratégies de rénovation** : Ordre de priorité des bâtiments à rénover  
         - **Scénarios temporels** : Rythme de déploiement des rénovations  
         - **Conversion énergétique** : Substitution entre sources d'énergie  
@@ -290,55 +327,99 @@ def main():
     # Séparateur visuel
     st.markdown("---")
 
-    
     # Chargement des données
     if 'city_data' not in st.session_state:
         with st.spinner("Chargement des données..."):
             st.session_state.city_data = load_sample_data()
     
-    city_data = st.session_state.city_data
+    original_city_data = st.session_state.city_data
     
-    # Calcul des rendements moyens par type d'énergie
+    # Sidebar pour les paramètres
+    st.sidebar.header("🔧 Paramètres de simulation")
+    
+    # === NOUVELLE SECTION : Périmètre d'étude ===
+    st.sidebar.markdown("### 🏠 Périmètre d'étude")
+    
+    # Sélection du type d'usage
+    with st.sidebar.expander("📋 Type de bâtiments", expanded=False):
+        st.markdown("""
+        **Choisissez quels types de bâtiments inclure dans l'analyse :**
+        - 🏠 **Résidentiel** : Logements
+        - 🏢 **Tertiaire** : Bâtiments d'activité (bureaux, commerces, etc.)
+        - 🏠+🏢 **Résidentiel + Tertiaire** 
+        """)
+        
+        usage_selection = st.radio(
+            "Secteurs à analyser",
+            options=["Résidentiel", "Tertiaire","Résidentiel + Tertiaire"],
+            index=2,  # Par défaut : Résidentiel + Tertiaire
+            help="Définit le périmètre des bâtiments inclus dans l'analyse"
+        )
+    
+    # Sélection CUD
+    with st.sidebar.expander("🏛️ Périmètre géographique", expanded=False):
+        st.markdown("""
+        **Filtrez sur les bâtiments de la Communauté Urbaine de Dunkerque :**
+        - ✅ **Bâtiments CUD uniquement** : Focus sur le patrimoine CUD
+        - 🌍 **Tous les bâtiments** : Analyse complète du territoire
+        """)
+        
+        cud_only = st.checkbox(
+            "Limiter aux bâtiments CUD",
+            value=False,
+            help="Si coché, seuls les bâtiments identifiés comme appartenant à la CUD seront analysés"
+        )
+    
+    # Filtrage des données selon les sélections
+    city_data = filter_data_by_selection(original_city_data, usage_selection, cud_only)
+    
+    # Affichage des statistiques du périmètre sélectionné
+    residential_count = len(city_data[city_data["UseType"] == "LOGEMENT"])
+    tertiary_count = len(city_data[city_data["UseType"] != "LOGEMENT"])
+    
+    st.sidebar.markdown("### 📊 Données filtrées")
+    
+    # Métriques avec détail par secteur
+    total_buildings = len(city_data)
+    st.sidebar.metric("Total bâtiments", total_buildings)
+    
+    if usage_selection == "Résidentiel + Tertiaire":
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            st.metric("🏠 Résidentiel", residential_count)
+        with col2:
+            st.metric("🏢 Tertiaire", tertiary_count)
+    elif usage_selection == "Résidentiel":
+        st.sidebar.metric("🏠 Résidentiel", residential_count)
+    else:
+        st.sidebar.metric("🏢 Tertiaire", tertiary_count)
+    
+    # Message d'information sur le filtre CUD
+    if cud_only:
+        if 'is_cud' in city_data.columns:
+            cud_buildings = len(city_data[city_data['is_cud'] == True])
+            st.sidebar.info(f"🏛️ Analyse limitée aux {cud_buildings} bâtiments CUD")
+        else:
+            st.sidebar.warning("⚠️ Filtre CUD non disponible - Tous les bâtiments inclus")
+    
+    # Vérification que des données existent après filtrage
+    if len(city_data) == 0:
+        st.error("❌ Aucun bâtiment ne correspond aux critères sélectionnés. Veuillez modifier vos filtres.")
+        st.stop()
+    
+    # Calcul des rendements moyens par type d'énergie (sur les données filtrées)
     heating_efficiency_map = calculate_heating_efficiencies(city_data)
     
-    # Préparer les stratégies
+    # Préparer les stratégies (sur les données filtrées)
     strategies = prepare_strategies(city_data)
     vecteurs_energie = city_data["energie_imope"].unique()
 
-    # Calcul du profil énergétique initial
+    # Calcul du profil énergétique initial (sur les données filtrées)
     original_profile = calculate_energy_profile_by_sector(city_data)
     
-    # Sidebar pour les paramètres
-    st.sidebar.header("🔧 Paramètres de modification")
-    
-    # Informations générales
-    st.sidebar.markdown("### 📊 Données de base")
-    st.sidebar.metric("Nombre de bâtiments", len(city_data))
-    st.sidebar.metric("Consommation totale", f"{sum([p['consommation_basic'] for p in original_profile.values()]):.0f} MWh/an")
-    
-
-    st.sidebar.markdown("### 📅 Stratégie de rénovation")
-
-
-    # Taux de rénovation avec explication
-    with st.sidebar.expander("🏗️ Taux de rénovation", expanded=False):
-        st.markdown("""
-        **Définit la proportion totale du parc immobilier qui sera rénovée d'ici 2050.**
-        - 0% = Aucune rénovation
-        - 100% = Tous les bâtiments rénovés
-        """)
-        coverage_rate = st.slider(
-            "Taux de rénovation total (2024-2050)",
-            min_value=0,
-            max_value=100,
-            value=30,
-            step=5,
-            help="Pourcentage total du parc immobilier à rénover sur la période 2024-2050"
-        )
-        
-        # Mise à jour des scénarios avec le taux de rénovation
-        for key in scenarios:
-            scenarios[key] = scenarios[key] * (coverage_rate / 100.0)
+    # Consommation totale avec les données filtrées
+    total_consumption = sum([p['consommation_basic'] for p in original_profile.values()])
+    st.sidebar.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
     
     # Choix de la stratégie avec explication
     with st.sidebar.expander("📌 Stratégie de rénovation", expanded=False):
@@ -506,16 +587,16 @@ def main():
     tab1, tab2 = st.tabs(["Consommations", "Émissions"])
     
     with tab1:
-        conso_df = pd.DataFrame(conso_par_vecteur, index=annees)
+        conso_df = pd.DataFrame(conso_par_vecteur, index=annees.astype(str))
         conso_df.index.name = "Année"
         st.dataframe(conso_df.style.format("{:,.1f}"), use_container_width=True)
     
     with tab2:
-        emissions_df = pd.DataFrame(emissions_par_vecteur, index=annees)
+        emissions_df = pd.DataFrame(emissions_par_vecteur, index=annees.astype(str))
         emissions_df.index.name = "Année"
         st.dataframe(emissions_df.style.format("{:,.1f}"), use_container_width=True)
     
-    st.header("📊 Hypothèses")
+    st.header("🔎 Hypothèses")
     # Facteurs carbone  Rapport HySPI Hydrogène industriel - Scénarios prospectifs des impacts environnementaux
     st.subheader("Évolution des facteurs carbone (kgCO₂/kWh)")
 
@@ -533,12 +614,12 @@ def main():
     st.plotly_chart(fig_carbone, use_container_width=True)
 
     # Affichage des rendements
-    st.subheader("Rendements moyens")
-    df_eff = pd.DataFrame(
-        {"Energie": list(heating_efficiency_map.keys()),
-         "Rendement": [f"{eff:.2f}" for eff in heating_efficiency_map.values()]
-        }
-    )
+    st.subheader("Tableau résumé des hypothèses de rendement et d'émmissions carbone de chauffage")
+    df_eff = pd.DataFrame({
+        "Énergie": list(heating_efficiency_map.keys()),
+        "Rendement (%)": [f"{eff:.2f}" for eff in heating_efficiency_map.values()],
+        "Émissions (kgCO₂/kWh)": [facteurs_carbone.get(energie, [0])[0] for energie in heating_efficiency_map.keys()]
+    })
     st.table(df_eff)
 
 if __name__ == "__main__":
