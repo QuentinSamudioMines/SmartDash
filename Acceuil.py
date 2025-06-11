@@ -14,17 +14,12 @@ st.markdown("""
 Bienvenue sur le **étude de la Communauté Urbaine de Duncerque pour le projet MAP 2050**.
 
 Le **projet MAP 2050** est un projet de **recherche appliquée** qui s'inscrit dans le champ de la **modélisation énergétique urbaine (UBEM)**. Son objectif est de **soutenir la planification énergétique et climatique des territoires** grâce à des outils de simulation adaptés.
+### Contexte et Problématique
+Dans le cadre de la transition énergétique et de la lutte contre le changement climatique, le secteur du bâtiment représente un levier d'action majeur. Les collectivités territoriales, en première ligne pour la mise en œuvre des politiques de rénovation énergétique, nécessitent des outils d'aide à la décision robustes pour orienter leurs stratégies à long terme.
 
-La **modélisation énergétique urbaine** est une approche développée depuis une dizaine d'années pour **estimer la consommation énergétique des bâtiments à l'échelle urbaine, souvent avec des données limitées** (Reinhart et al., 2013). Cet outil est précieux pour accompagner les politiques publiques locales, mais son usage opérationnel reste encore limité dans les processus de planification.
-
----
-
-### Ce que vous pouvez faire avec cette application :
-- **Analyser des scénarios de transition énergétique** basés sur des hypothèses de rénovation, de décarbonation ou d’évolution des usages.
-- **Soutenir la décision publique** avec des analyses spatialisées et des indicateurs pertinents.
+La **Modélisation Énergétique Urbaine** (ou *Urban Building Energy Modeling*, UBEM) s'est imposée comme une approche scientifique de premier plan pour estimer et simuler la consommation énergétique du parc bâti à l'échelle d'une ville ou d'un quartier (Reinhart et al., 2013). Malgré un développement académique soutenu, le transfert de ces outils vers un usage opérationnel par les acteurs de la planification territoriale reste un défi majeur.
 
 ---
-
 ### Contexte scientifique :
 La littérature sur les UBEM est abondante et couvre des sujets tels que :
 - L'aide au choix énergétique urbain (Tol, 2012)
@@ -32,15 +27,26 @@ La littérature sur les UBEM est abondante et couvre des sujets tels que :
 - Les scénarios de rénovation à large échelle (Johari, 2024 ; Rit, 2022)
 - L'évaluation des politiques publiques (Nouvel, 2013)
 
-Cependant, plusieurs **limites persistent** :
-- La qualité et la disponibilité des données d'entrée
-- La complexité et le temps de calcul des modèles
-- La difficulté de calibration et de validation à grande échelle
+### Le Projet MAP 2050
+Le projet de recherche appliquée **MAP 2050** vise à combler ce fossé en développant un démonstrateur UBEM spécifiquement conçu pour soutenir la planification énergétique. En s'appuyant sur le cas d'étude de la **Communauté Urbaine de Dunkerque**, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
 
-L'émergence des **open data** constitue une opportunité pour améliorer la précision et la robustesse des UBEM (Labetski et al., 2023).
+#### Objectifs du démonstrateur :
+Cet outil a été conçu pour permettre aux utilisateurs de :
+- **Explorer et comparer des scénarios de transition énergétique** en faisant varier les stratégies de rénovation (rythme, profondeur) et les bouquets énergétiques.
+- **Visualiser l'impact de ces scénarios** sur la consommation énergétique globale et les émissions de gaz à effet de serre à l'horizon 2050.
+- **Analyser la distribution des performances énergétiques** du parc immobilier et son évolution au fil du temps.
 
 ---
 
+### Positionnement Scientifique
+Le projet MAP 2050 s'inscrit dans les travaux de recherche sur l'évaluation des politiques publiques (Nouvel, 2013), les scénarios de rénovation à grande échelle (Johari, 2024 ; Rit, 2022) et l'aide à la décision pour la planification énergétique urbaine (Tol, 2012).
+
+Il cherche à adresser certaines **limites récurrentes** des approches UBEM, notamment :
+- La sensibilité à la qualité et la disponibilité des données d'entrée.
+- La calibration et la validation des modèles à l'échelle urbaine.
+- L'intégration des dynamiques socio-économiques dans les scénarios de rénovation.
+
+---
 ### L’outil Smart-E  :
 
 Le projet MAP 2050 s’appuie sur **Smart‑E**, une plateforme de simulation énergétique territoriale **développée par les Mines Paris – PSL**. Smart‑E permet de :
@@ -54,7 +60,7 @@ MAP 2050 vise à proposer des **recommandations pratiques et des applications c
 ---
 
 ### Contact :
-Pour plus d’informations ou pour une collaboration, veuillez contacter l’équipe MAP 2050 :
+Pour plus d’informations ou pour une collaboration, veuillez contacter :
 - Quentin Samudio - Ingénieur de recherche - quentin.samudio@minesparis.psl.eu           
 
 ---
