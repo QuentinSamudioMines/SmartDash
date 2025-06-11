@@ -19,8 +19,8 @@ warnings.filterwarnings("ignore", message=".*missing ScriptRunContext.*")
 
 # Configuration de la page
 st.set_page_config(
-    page_title="SmartDash - Simulation Rénovation Énergétique",
-    page_icon="logo.png",
+    page_title="SmartE - Simulation Rénovation Énergétique",
+    page_icon="images/logo.png",
     layout="wide"
 )
 
@@ -242,14 +242,14 @@ def main():
     # En-tête avec colonnes pour logo + titre
     col_logo, col_title = st.columns([1, 5])
     with col_logo:
-        st.image("logo.png", width=140)
+        st.image("images/logo.png", width=140)
     with col_title:
         st.title("SmartE - Simulateur Rénovation Énergétique")
     
     # Bannière d'introduction
     st.markdown("""
     <div style="background-color:#f0f2f6;padding:20px;border-radius:10px;margin-bottom:20px">
-    <h3 style="color:#1e3a8a;margin-top:0;">♻️ Optimisez votre stratégie de rénovation énergétique</h3>
+    <h3 style="color:#1e3a8a;margin-top:0;"> Optimisez votre stratégie de rénovation énergétique</h3>
     <p>Cet outil permet de simuler différents scénarios de rénovation du parc immobilier et d'analyser leur impact sur :</p>
     <ul>
         <li>Les <b>consommations énergétiques</b> (MWh)</li>

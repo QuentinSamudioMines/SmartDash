@@ -17,9 +17,9 @@ city_part1 = city_survivor.iloc[:chunk_size]
 city_part2 = city_survivor.iloc[chunk_size:2*chunk_size]
 city_part3 = city_survivor.iloc[2*chunk_size:]
 
-# Sauvegarde
+# Sauvegarde des découpes
 city_part1.to_pickle("city_part1.pkl")
-city_part2.to_pickle("city_part2.pkl")
+city_part2.to_pickle("city_part2.pkl") 
 city_part3.to_pickle("city_part3.pkl")
 
 print("Découpage terminé : city_part1.pkl, city_part2.pkl, city_part3.pkl créés.")
