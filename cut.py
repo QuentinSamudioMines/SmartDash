@@ -2,8 +2,8 @@ import pandas as pd
 
 # Chargement des données
 city = pd.read_pickle("city_file.pkl")
-
-survivor = ["geometry","total_energy_consumption_basic", "UseType","CODE_IRIS","Consommation par m² par an (en kWh/m².an)_basic", "total_energy_consumption_renovated","Consommation par m² par an (en kWh/m².an)", "energie_imope", "heating_efficiency"]
+print(list(city.columns))
+survivor = ["geometry","total_energy_consumption_basic", "UseType","CODE_IRIS","NOM_COM","Consommation par m² par an (en kWh/m².an)_basic", "total_energy_consumption_renovated","Consommation par m² par an (en kWh/m².an)", "energie_imope", "heating_efficiency"]
 
 # Filtrer et ne garder que la colonne 'survivor'
 city_survivor = city[survivor]
