@@ -20,13 +20,6 @@ Dans le cadre de la transition énergétique et de la lutte contre le changement
 La **Modélisation Énergétique Urbaine** (ou *Urban Building Energy Modeling*, UBEM) s'est imposée comme une approche scientifique de premier plan pour estimer et simuler la consommation énergétique du parc bâti à l'échelle d'une ville ou d'un quartier (Reinhart et al., 2013). Malgré un développement académique soutenu, le transfert de ces outils vers un usage opérationnel par les acteurs de la planification territoriale reste un défi majeur.
 
 ---
-### Contexte scientifique :
-La littérature sur les UBEM est abondante et couvre des sujets tels que :
-- L'aide au choix énergétique urbain (Tol, 2012)
-- La prédiction de la demande énergétique (Hu, 2022)
-- Les scénarios de rénovation à large échelle (Johari, 2024 ; Rit, 2022)
-- L'évaluation des politiques publiques (Nouvel, 2013)
-
 ### Le Projet MAP 2050
 Le projet de recherche appliquée **MAP 2050** vise à combler ce fossé en développant un démonstrateur UBEM spécifiquement conçu pour soutenir la planification énergétique. En s'appuyant sur le cas d'étude de la **Communauté Urbaine de Dunkerque**, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
 

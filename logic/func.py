@@ -82,6 +82,7 @@ def simulate(df, coverage, scenario_temporel, vecteurs_energie, efficiency_map, 
     scenario_temporel = scenario_temporel * (coverage / 100.0)
 
     for i_annee, p in enumerate(scenario_temporel):
+        #print(i_annee, p)
         n_reno = int(p * n_batiments)
         df_reno = df.iloc[:n_reno]
         df_non_reno = df.iloc[n_reno:]
@@ -93,6 +94,8 @@ def simulate(df, coverage, scenario_temporel, vecteurs_energie, efficiency_map, 
             conso_reno = df_reno[df_reno["energie_imope"] == vec]["total_energy_consumption_renovated"].sum() / 1000
             conso_rest = df_non_reno[df_non_reno["energie_imope"] == vec]["total_energy_consumption_basic"].sum() / 1000
             conso_vect[vec] = conso_reno + conso_rest
+            #print(f"Année {annees[i_annee]} - {vec} : {conso_reno} + {conso_rest} = {conso_vect[vec]} MWh")
+
 
         # Application des substitutions avec progression selon le scénario temporel
         for source_vec, target_vec, percentage in substitutions:
