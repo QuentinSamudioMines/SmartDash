@@ -30,16 +30,6 @@ Cet outil a été conçu pour permettre aux utilisateurs de :
 - **Analyser la distribution des performances énergétiques** du parc immobilier et son évolution au fil du temps.
 
 ---
-
-### Positionnement Scientifique
-Le projet MAP 2050 s'inscrit dans les travaux de recherche sur l'évaluation des politiques publiques (Nouvel, 2013), les scénarios de rénovation à grande échelle (Johari, 2024 ; Rit, 2022) et l'aide à la décision pour la planification énergétique urbaine (Tol, 2012).
-
-Il cherche à adresser certaines **limites récurrentes** des approches UBEM, notamment :
-- La sensibilité à la qualité et la disponibilité des données d'entrée.
-- La calibration et la validation des modèles à l'échelle urbaine.
-- L'intégration des dynamiques socio-économiques dans les scénarios de rénovation.
-
----
 ### L’outil Smart-E  :
 
 Le projet MAP 2050 s’appuie sur **Smart‑E**, une plateforme de simulation énergétique territoriale **développée par les Mines Paris – PSL**. Smart‑E permet de :
