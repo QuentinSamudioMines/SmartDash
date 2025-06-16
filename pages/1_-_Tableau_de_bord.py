@@ -539,9 +539,18 @@ def main():
         conso_par_vecteur, 
         emissions_par_vecteur, strategie, annees, scenario_temporelles
     )
-    
+    st.markdown("---") 
     display_summary_metrics(conso_par_vecteur, emissions_par_vecteur)
+    st.markdown("---") 
     display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees)
+    st.markdown("---")  # Séparateur visuel
+    # Affichage des hypothèses et paramètres
+    display_assumptions(
+        heating_efficiency_map, 
+        electricity_carbone_factor, 
+        facteurs_carbone, 
+        annees
+    )
 
 
 # ============================================================================
