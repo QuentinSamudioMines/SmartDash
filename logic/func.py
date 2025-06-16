@@ -260,6 +260,7 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_
     Returns:
         pd.DataFrame: Données filtrées
     """
+    
     # Filtre CUD si demandé (supposant qu'il existe une colonne 'is_cud' ou similaire)
     if cud_only:
         if 'is_cud' in city_data.columns:
@@ -376,15 +377,16 @@ def create_evolution_chart(annees, df, scenario, title="Évolution des consommat
     
     return fig
 
-def create_dynamic_histogram(df, scenario, title="Distribution des consommations par m²"):
+def create_dynamic_histogram(df, scenario_temporel, title="Distribution des consommations par m²"):
     """
     Crée un histogramme animé montrant l'évolution de la distribution des consommations par m².
     Cette version utilise un binning manuel et px.bar pour garantir une largeur de barre constante.
     """
+    scenario_temporel = scenario_temporel * (st.session_state["coverage_rate"] / 100.0)
     # 1. Obtenir les données pour toutes les années
     all_data = []
     for i, year in enumerate(annees):
-        dist_data = get_building_consumption_distribution(df, scenario, i)
+        dist_data = get_building_consumption_distribution(df, scenario_temporel, i)
         year_df = pd.DataFrame({
             'consumption_m2': dist_data['consumption_m2'],
             'renovated': dist_data['renovated'],
@@ -419,20 +421,22 @@ def create_dynamic_histogram(df, scenario, title="Distribution des consommations
     final_df.sort_values(by=['year', 'bin'], inplace=True)
 
     # 6. Créer le graphique à barres animé avec px.bar
+    final_df['renovated_label'] = final_df['renovated'].map({True: 'Rénové', False: 'Non-rénové'})
+
     fig = px.bar(
         final_df,
         x='bin',
         y='count',
-        color='renovated',
+        color='renovated_label',
         animation_frame='year',
         title=title,
         labels={
             'bin': 'Consommation par m² (kWh/m².an)',
             'count': 'Nombre de bâtiments',
-            'renovated': 'Statut de rénovation'
+            'renovated_label': 'Statut de rénovation'
         },
-        color_discrete_map={True: '#636EFA', False: '#EF553B'},
-        category_orders={"renovated": [False, True]} # Non-rénové en premier
+        color_discrete_map={'Rénové': '#636EFA', 'Non-rénové': '#EF553B'},
+        category_orders={"renovated_label": ['Non-rénové', 'Rénové']}
     )
 
     # 7. Personnaliser le style

@@ -1,18 +1,3 @@
-"""
-# SmartDash - Simulation de rénovation énergétique et émissions carbone
-# 
-# Cette application permet de simuler l'impact des stratégies de rénovation énergétique 
-# sur la consommation d'énergie et les émissions de carbone dans une ville.
-# Elle permet aux utilisateurs de choisir différentes stratégies et scénarios de rénovation,
-# et visualise les résultats sous forme de graphiques interactifs.
-#
-# Installation des dépendances requises :
-# pip install streamlit plotly pandas numpy
-#
-# Commande pour lancer l'application :
-# streamlit run SmartDash.py 
-"""
-
 # ============================================================================
 # IMPORTS ET CONFIGURATION
 # ============================================================================
@@ -89,7 +74,7 @@ def display_introduction():
         st.markdown("""
         1. **Sélectionnez** le périmètre d'étude (résidentiel seul ou avec tertiaire)
         2. **Paramétrez** votre simulation dans la barre latérale ←
-        3. **Visualisez** les résultats en temps réel
+        3. **Visualisez** les résultats en quelques secondes
         4. **Comparez** différents scénarios
         
         ### Concepts clés :
@@ -102,9 +87,8 @@ def display_introduction():
 
 def initialize_data():
     """Charge et initialise les données de la ville si pas déjà en mémoire"""
-    if 'city_data' not in st.session_state:
-        with st.spinner("Chargement des données..."):
-            st.session_state.city_data = load_sample_data()
+    with st.spinner("Chargement des données..."):
+        st.session_state.city_data = load_sample_data()
     
     # Sauvegarde des scénarios pour utilisation dans d'autres pages
     st.session_state['scenarios_temporelles'] = scenarios_temporelles
@@ -155,6 +139,7 @@ def display_filtered_data_stats(city_data, usage_selection, cud_only):
     tertiary_count = len(city_data[city_data["UseType"] != "LOGEMENT"])
     total_buildings = len(city_data)
     
+    st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 Données filtrées")
     
     # Affichage des métriques
@@ -187,6 +172,7 @@ def display_filtered_data_stats(city_data, usage_selection, cud_only):
 
 def setup_simulation_parameters():
     """Configure les paramètres de simulation dans la sidebar"""
+    st.sidebar.markdown("---")
     st.sidebar.header("🔧 Paramètres de simulation")
     
     # === TAUX DE RÉNOVATION ===
@@ -315,11 +301,11 @@ def setup_energy_substitution(original_profile, heating_efficiency_map):
     
     return st.session_state['substitutions']
 
-def display_results(selected_strategy, selected_scenario, conso_par_vecteur, 
+def display_results(conso_par_vecteur, 
                    emissions_par_vecteur, df_selected, annees, scenario_data):
     """Affiche les résultats de la simulation"""
-    st.subheader(f"Résultats pour la stratégie: {selected_strategy} - Scénario: {selected_scenario}")
-
+    st.subheader(f"Résultats pour la stratégie: {st.session_state['strategy_name']} - Scénario: {st.session_state['scenario_name']}")
+    
     # === GRAPHIQUES PRINCIPAUX ===
     st.subheader("Consommation et émissions annuelles")
     col1, col2 = st.columns(2)
@@ -334,7 +320,7 @@ def display_results(selected_strategy, selected_scenario, conso_par_vecteur,
     
     # === NOUVEAU GRAPHIQUE DES ÉMISSIONS CUMULÉES ===
     st.subheader("Impact cumulé des rénovations sur les émissions")
-    fig_cumulative = create_cumulative_emissions_chart(annees, emissions_par_vecteur, selected_scenario)
+    fig_cumulative = create_cumulative_emissions_chart(annees, emissions_par_vecteur, st.session_state['scenario_name'])
     st.plotly_chart(fig_cumulative, use_container_width=True)
     
     # Explication de l'interprétation
@@ -480,14 +466,9 @@ def main():
     display_filtered_data_stats(st.session_state.city_data, usage_selection, cud_only)
     
     # === CALCULS PRÉPARATOIRES ===
-    # Calcul des rendements moyens par type d'énergie
     heating_efficiency_map = calculate_heating_efficiencies(st.session_state.city_data)
-    
-    # Préparation des stratégies de rénovation
     strategies = prepare_strategies(st.session_state.city_data)
     vecteurs_energie = st.session_state.city_data["energie_imope"].unique()
-    
-    # Calcul du profil énergétique initial
     original_profile = calculate_energy_profile_by_sector(st.session_state.city_data)
     
     # === PARAMÉTRAGE DE LA SIMULATION ===
@@ -495,40 +476,73 @@ def main():
     selected_strategy = setup_renovation_strategy_selection(strategies)
     selected_scenario = setup_temporal_scenario_selection()
     substitutions = setup_energy_substitution(original_profile, heating_efficiency_map)
-    
-    # === EXÉCUTION DE LA SIMULATION ===
-    strategie = strategies[selected_strategy]
-    scenario_temporelles = scenarios_temporelles[selected_scenario]
-    
-    conso_par_vecteur, emissions_par_vecteur = simulate(
-        strategie,
-        coverage_rate,
-        scenario_temporelles,
-        vecteurs_energie,
-        heating_efficiency_map,
-        substitutions.copy()  # Copie pour éviter les effets de bord
-    )
-    
-    # === SAUVEGARDE DES DONNÉES DE SESSION ===
-    save_session_data(
-        selected_scenario, selected_strategy, usage_selection, 
-        substitutions, coverage_rate
-    )
-    
-    # === AFFICHAGE DES RÉSULTATS ===
+
+    # === INITIALISATION DE L'ÉTAT DE SESSION ===
+    if "simulation_already_run" not in st.session_state:
+        st.session_state.simulation_already_run = False
+
+    # === BOUTON DE LANCEMENT ===
+    run_simulation = False
+
+    # Simulation automatique au premier chargement
+    if not st.session_state.simulation_already_run:
+        run_simulation = True
+        st.session_state.simulation_already_run = True
+
+    # Simulation manuelle via bouton
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🚀 Lancer ou relancer la simulation"):
+        run_simulation = True
+        st.session_state.simulation_already_run = True  # Important pour afficher ensuite les résultats
+
+    if run_simulation:
+        strategie = strategies[selected_strategy]
+        scenario_temporelles = scenarios_temporelles[selected_scenario]
+
+        conso_par_vecteur, emissions_par_vecteur = simulate(
+            strategie,
+            coverage_rate,
+            scenario_temporelles,
+            vecteurs_energie,
+            heating_efficiency_map,
+            substitutions.copy()
+        )
+        save_session_data(
+            selected_scenario, selected_strategy, usage_selection, 
+            substitutions, coverage_rate
+        )
+        
+        # Stocker résultats dans session pour réutilisation
+        st.session_state.conso_par_vecteur = conso_par_vecteur
+        st.session_state.emissions_par_vecteur = emissions_par_vecteur
+        st.session_state.strategie = strategie
+        st.session_state.scenario_temporelles = scenario_temporelles
+
+    # Si simulation pas lancée maintenant, vérifier si résultats en session
+    if not run_simulation:
+        if (
+            "conso_par_vecteur" in st.session_state 
+            and "emissions_par_vecteur" in st.session_state
+            and "strategie" in st.session_state
+            and "scenario_temporelles" in st.session_state
+        ):
+            conso_par_vecteur = st.session_state.conso_par_vecteur
+            emissions_par_vecteur = st.session_state.emissions_par_vecteur
+            strategie = st.session_state.strategie
+            scenario_temporelles = st.session_state.scenario_temporelles
+        else:
+            st.info("Cliquez sur le bouton 🚀 dans la sidebar pour lancer la simulation.")
+            st.stop()
+
+    # Maintenant que les variables sont définies, on peut afficher
     display_results(
-        selected_strategy, selected_scenario, conso_par_vecteur, 
+        conso_par_vecteur, 
         emissions_par_vecteur, strategie, annees, scenario_temporelles
     )
     
     display_summary_metrics(conso_par_vecteur, emissions_par_vecteur)
     display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees)
-    
-    # === AFFICHAGE DES HYPOTHÈSES ===
-    display_assumptions(
-        heating_efficiency_map, electricity_carbone_factor, 
-        facteurs_carbone, annees
-    )
+
 
 # ============================================================================
 # POINT D'ENTRÉE DE L'APPLICATION

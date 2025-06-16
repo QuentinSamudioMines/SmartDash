@@ -31,7 +31,7 @@ facteurs_carbone = {
     "gaz naturel": np.full(n_annees, 0.23),
     "fioul": np.full(n_annees, 0.300),
     "bois": np.full(n_annees, 0.025),
-    "chauffage urbain": np.linspace(0.3, 0.2, n_annees),
+    "chauffage urbain": np.linspace(0.127, 0.079, n_annees),
     "autre": np.full(n_annees, 0.150),
     "mixte": np.full(n_annees, 0.100),
     "PAC Air-Air": electricity_carbone_factor,

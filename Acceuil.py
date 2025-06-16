@@ -1,3 +1,17 @@
+"""
+# SmartDash - Simulation de rénovation énergétique et émissions carbone
+# 
+# Cette application permet de simuler l'impact des stratégies de rénovation énergétique 
+# sur la consommation d'énergie et les émissions de carbone dans une ville.
+# Elle permet aux utilisateurs de choisir différentes stratégies et scénarios de rénovation,
+# et visualise les résultats sous forme de graphiques interactifs.
+#
+# Installation des dépendances requises :
+# pip install streamlit plotly pandas numpy
+#
+# Commande pour lancer l'application :
+# streamlit run Acceuil.py 
+"""
 import streamlit as st
 
 st.set_page_config(
@@ -21,13 +35,16 @@ La **Modélisation Énergétique Urbaine** (ou *Urban Building Energy Modeling*,
 
 ---
 ### Le Projet MAP 2050
-Le projet de recherche appliquée **MAP 2050** vise à combler ce fossé en développant un démonstrateur UBEM spécifiquement conçu pour soutenir la planification énergétique. En s'appuyant sur le cas d'étude de la **Communauté Urbaine de Dunkerque**, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
+Le projet de recherche appliquée MAP 2050 vise à identifier les avantages et limites des UBEM pour la planification énergétique par une mise en application sur un cas concret.. En s'appuyant sur le cas d'étude de la Communauté Urbaine de Dunkerque, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
 
 #### Objectifs du démonstrateur :
 Cet outil a été conçu pour permettre aux utilisateurs de :
 - **Explorer et comparer des scénarios de transition énergétique** en faisant varier les stratégies de rénovation (rythme, profondeur) et les bouquets énergétiques.
 - **Visualiser l'impact de ces scénarios** sur la consommation énergétique globale et les émissions de gaz à effet de serre à l'horizon 2050.
 - **Analyser la distribution des performances énergétiques** du parc immobilier et son évolution au fil du temps.
+
+##### Conclusions
+Le démonstrateur illustre le type de résultats que l’on peut obtenir à partir de données publiques sur les bâtiments. Il montre l’apport des outils de simulation physique des bâtiments pour l’étude de scénarios avec quelques exemples, sans rechercher l’exhaustivité des potentialités offertes par l’outil. En revanche, la principale limite aujourd’hui est la fiabilité des données disponibles, notamment en ce qui concerne le parc de bâtiments tertiaires.
 
 ---
 ### L’outil Smart-E  :
