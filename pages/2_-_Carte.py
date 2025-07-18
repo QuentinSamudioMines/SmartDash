@@ -272,8 +272,8 @@ def create_consumption_map(display_gdf, map_center, zoom_level):
     folium.GeoJson(
         display_gdf,
         style_function=lambda feature: {
-            'fillColor': colormap(min(feature['properties']['conso_actuelle'], max_conso)),
-            'color': colormap(min(feature['properties']['conso_actuelle'], max_conso)),
+            'fillColor': colormap(min(feature['properties']['conso_actuelle'] or 0, max_conso)),
+            'color': colormap(min(feature['properties']['conso_actuelle'] or 0, max_conso)),
             'weight': 0.5,
             'fillOpacity': 0.7,
         },

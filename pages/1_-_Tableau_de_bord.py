@@ -174,24 +174,37 @@ def setup_simulation_parameters():
     """Configure les paramètres de simulation dans la sidebar"""
     st.sidebar.markdown("---")
     st.sidebar.header("🔧 Paramètres de simulation")
-    
-    # === TAUX DE RÉNOVATION ===
-    with st.sidebar.expander("🏗️ Taux de rénovation", expanded=False):
+
+    # === Taux de rénovation par usage agrégé ===
+    with st.sidebar.expander("🏗️ Taux de rénovation par type global", expanded=False):
         st.markdown("""
-        **Définit la proportion totale du parc immobilier qui sera rénovée d'ici 2050.**
-        - 0% = Aucune rénovation
-        - 100% = Tous les bâtiments rénovés
+        **Définit la proportion du parc rénovée d’ici 2050 pour chaque grand usage.**
+        - Résidentiel : logements
+        - Tertiaire : écoles, bureaux, commerces, etc.
         """)
-        coverage_rate = st.slider(
-            "Taux de rénovation total (2024-2050)",
+        taux_residentiel = st.slider(
+            "Résidentiel",
             min_value=0,
             max_value=100,
             value=30,
             step=5,
-            help="Pourcentage total du parc immobilier à rénover sur la période 2024-2050"
+            help="Taux de rénovation pour les bâtiments résidentiels"
         )
-    
-    return coverage_rate
+
+        taux_tertiaire = st.slider(
+            "Tertiaire",
+            min_value=0,
+            max_value=100,
+            value=20,
+            step=5,
+            help="Taux de rénovation pour les bâtiments tertiaires"
+        )
+
+    return {
+        "Résidentiel": taux_residentiel,
+        "Tertiaire": taux_tertiaire
+    }
+
 
 def setup_renovation_strategy_selection(strategies):
     """Configure la sélection de stratégie de rénovation"""
@@ -426,13 +439,13 @@ def display_assumptions(heating_efficiency_map, electricity_carbone_factor,
     st.table(df_eff)
 
 def save_session_data(scenario_name, strategy_name, usage_selection, 
-                     substitutions, coverage_rate):
+                     substitutions, coverage_rates):
     """Sauvegarde les données de session pour utilisation dans d'autres pages"""
     st.session_state['scenario_name'] = scenario_name
     st.session_state['strategy_name'] = strategy_name
     st.session_state['usage_selection'] = usage_selection
     st.session_state['substitutions'] = substitutions
-    st.session_state['coverage_rate'] = coverage_rate
+    st.session_state['coverage_rates'] = coverage_rates
 
 # ============================================================================
 # FONCTION PRINCIPALE
@@ -472,7 +485,7 @@ def main():
     original_profile = calculate_energy_profile_by_sector(st.session_state.city_data)
     
     # === PARAMÉTRAGE DE LA SIMULATION ===
-    coverage_rate  = setup_simulation_parameters()
+    coverage_rates  = setup_simulation_parameters()
     selected_strategy = setup_renovation_strategy_selection(strategies)
     selected_scenario = setup_temporal_scenario_selection()
     substitutions = setup_energy_substitution(original_profile, heating_efficiency_map)
@@ -501,7 +514,7 @@ def main():
 
         conso_par_vecteur, emissions_par_vecteur = simulate(
             strategie,
-            coverage_rate,
+            coverage_rates,
             scenario_temporelles,
             vecteurs_energie,
             heating_efficiency_map,
@@ -509,7 +522,7 @@ def main():
         )
         save_session_data(
             selected_scenario, selected_strategy, usage_selection, 
-            substitutions, coverage_rate
+            substitutions, coverage_rates
         )
         
         # Stocker résultats dans session pour réutilisation

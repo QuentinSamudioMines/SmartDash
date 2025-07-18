@@ -1,3 +1,4 @@
+import logging
 import streamlit as st
 import numpy as np
 import pandas as pd
@@ -71,57 +72,85 @@ def calculate_energy_profile_by_sector(df, sector_column="energie_imope"):
     
     return profile
 
-def simulate(df, coverage, scenario_temporel, vecteurs_energie, efficiency_map, substitutions):
-    """Exécute la simulation pour une stratégie et un scénario donnés avec substitutions dynamiques."""
+def simulate(df, coverage_by_group, scenario_temporel, vecteurs_energie, efficiency_map, substitutions):
+    """
+    Exécute la simulation multi-usages avec des taux de rénovation différenciés (résidentiel vs tertiaire).
+    Applique aussi les substitutions d'énergie et calcule les consommations/émissions.
+    
+    Args :
+        df : DataFrame avec les bâtiments
+        coverage_by_group : dict comme {"Résidentiel": 30, "Tertiaire": 20}
+        scenario_temporel : np.array ou liste des parts cumulées de rénovation sur 2024 to 2050 (somme à 1)
+        vecteurs_energie : liste des vecteurs (ex : ["Electricité", "Fioul", ...])
+        efficiency_map : dict des rendements par vecteur
+        substitutions : liste de tuples (source_vec, target_vec, pourcentage_max)
+    """
+    
     conso_par_vecteur = {vec: [] for vec in vecteurs_energie}
     emissions_par_vecteur = {vec: [] for vec in vecteurs_energie}
-    n_batiments = len(df)
     n_annees = len(scenario_temporel)
+    
+    # === Construction des masques
+    mask_res = df["UseType"] == "LOGEMENT"
+    mask_tertiaire = df["UseType"] != "LOGEMENT" # adapte si besoin
 
-    # Normalisation du scénario temporel selon le taux de couverture
-    scenario_temporel = scenario_temporel * (coverage / 100.0)
+    # Pré-calcule les index triés (pour stabilité dans le temps)
+    df_res_sorted = df[mask_res].sort_values(by="ID").reset_index(drop=True)
+    df_tert_sorted = df[mask_tertiaire].sort_values(by="ID").reset_index(drop=True)
 
-    for i_annee, p in enumerate(scenario_temporel):
-        #print(i_annee, p)
-        n_reno = int(p * n_batiments)
-        df_reno = df.iloc[:n_reno]
-        df_non_reno = df.iloc[n_reno:]
+    n_res = len(df_res_sorted)
+    n_tert = len(df_tert_sorted)
+
+    # Normalisation des scénarios temporels pour chaque groupe
+    scenario_res = scenario_temporel * (coverage_by_group.get("Résidentiel", 0) / 100)
+    scenario_tert = scenario_temporel * (coverage_by_group.get("Tertiaire", 0) / 100)
+
+    for i_annee in range(n_annees):
+        # === Sélection des bâtiments rénovés à cette année ===
+        n_reno_res = int(scenario_res[i_annee] * n_res)
+        n_reno_tert = int(scenario_tert[i_annee] * n_tert)
+
+        df_reno = pd.concat([
+            df_res_sorted.iloc[:n_reno_res],
+            df_tert_sorted.iloc[:n_reno_tert]
+        ])
+        df_non_reno = pd.concat([
+            df_res_sorted.iloc[n_reno_res:],
+            df_tert_sorted.iloc[n_reno_tert:]
+        ])
 
         conso_vect = {vec: 0.0 for vec in vecteurs_energie}
 
-        # Calcul des consommations de base (sans substitution)
+        # === Calcul des consommations par vecteur
         for vec in vecteurs_energie:
-            conso_reno = df_reno[df_reno["energie_imope"] == vec]["total_energy_consumption_renovated"].sum() / 1000
+            conso_reno = df_reno[df_reno["energie_imope"] == vec]["total_energy_consumption_renovated"].sum()  / 1000
             conso_rest = df_non_reno[df_non_reno["energie_imope"] == vec]["total_energy_consumption_basic"].sum() / 1000
             conso_vect[vec] = conso_reno + conso_rest
-            #print(f"Année {annees[i_annee]} - {vec} : {conso_reno} + {conso_rest} = {conso_vect[vec]} MWh")
 
-
-        # Application des substitutions avec progression selon le scénario temporel
+        # === Substitutions dynamiques
         for source_vec, target_vec, percentage in substitutions:
-            # Calcul du taux effectif de substitution pour cette année
-            # en fonction de la progression du scénario temporel
-            progression_scenario = scenario_temporel[i_annee] / scenario_temporel[-1]  # Progression relative (0 à 1)
+            progression_scenario = scenario_temporel[i_annee] / scenario_temporel[-1]  # progressivité
             effective_substitution_rate = (percentage / 100) * progression_scenario
-            
+
             conso_vect = substitute_energy(
                 conso_vect,
                 source_vec=source_vec,
                 target_vec=target_vec,
                 year_index=i_annee,
                 total_years=n_annees,
-                max_substitution_rate=effective_substitution_rate,  # Taux ajusté par le scénario
+                max_substitution_rate=effective_substitution_rate,
                 efficiency_map=efficiency_map
             )
 
-        # Stockage des consommations et émissions
+        # === Stockage des résultats
         for vec in vecteurs_energie:
             conso_par_vecteur[vec].append(conso_vect[vec])
             facteur = facteurs_carbone.get(vec, np.zeros(n_annees))[i_annee]
-            emissions = conso_vect[vec] * facteur  # tCO₂
+            emissions = conso_vect[vec] * facteur
             emissions_par_vecteur[vec].append(emissions)
 
     return conso_par_vecteur, emissions_par_vecteur
+
 def synthesize_results(conso_par_vecteur, emissions_par_vecteur):
     """Calcule les bilans énergétiques et carbone."""
     total_conso_2024 = sum([conso[0] for conso in conso_par_vecteur.values()])
@@ -157,7 +186,7 @@ def create_consumption_chart(annees, conso_par_vecteur, title="Consommation par 
         xaxis_title="Année",
         yaxis_title="Consommation (MWh)",
         hovermode="x unified",
-        height=500
+        height=800
     )
     return fig
 
@@ -179,7 +208,7 @@ def create_emissions_chart(annees, emissions_par_vecteur, title="Émissions carb
         xaxis_title="Année",
         yaxis_title="Émissions (tCO₂)",
         hovermode="x unified",
-        height=500
+        height=800
     )
     return fig
 
@@ -213,7 +242,7 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
         yaxis_title="Émissions cumulées (tonnes CO₂)",
         hovermode="x unified",
         legend_title="Type d'énergie",
-        height=500,
+        height=800,
         annotations=[
             dict(
                 text="Plus la courbe est plate, plus les réductions d'émissions sont importantes",
@@ -233,18 +262,20 @@ def load_sample_data():
     part1 = pd.read_pickle("city_part1.pkl")
     part2 = pd.read_pickle("city_part2.pkl")
     part3 = pd.read_pickle("city_part3.pkl")
+    part4 = pd.read_pickle("city_part4.pkl")
+
     #"PAC Air-Air" : 3, "PAC Air-Eau" : 3, "PAC Eau-Eau" : 4, "PAC Géothermique" : 5
-    part4 = pd.DataFrame({
+    part5 = pd.DataFrame({
         "total_energy_consumption_basic": [0, 0, 0,0,0,0],
         "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0,0, 0, 0],
         "total_energy_consumption_renovated": [0, 0, 0,0, 0, 0],
-        "Consommation par m² par an (en kWh/m².an)": [0, 0, 0,0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0,0, 0, 0],
         "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
         "heating_efficiency": [3.0, 4.0, 5.0,3.0, 4.0, 5.0],
         "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT","Autre", "Autre", "Autre"],
     })  # Ajout d'une ligne vide pour éviter les erreurs de concaténation
 
-    city = pd.concat([part1, part2, part3,part4], ignore_index=True)
+    city = pd.concat([part1, part2, part3,part4, part5], ignore_index=True)
     return city
 
 
@@ -282,48 +313,101 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_
         pass
     return filtered_data
     
-def get_building_consumption_distribution(df, scenario, year_index):
-    """
-    Calcule la distribution des consommations par m² pour une année donnée de la simulation.
-    
-    Args:
-        df: DataFrame des bâtiments triés selon la stratégie
-        scenario: Scénario de rénovation (array des pourcentages)
-        year_index: Index de l'année dans le scénario
-    
-    Returns:
-        dict: Distribution des consommations par m² avec statut de rénovation
-    """
+def get_building_consumption_distribution(df, coverage_vector, year_index):
+    logging.debug(f"\n🧪 len(df) = {len(df)} | len(coverage_vector) = {len(coverage_vector)}")
+
     n_batiments = len(df)
-    p = scenario[year_index] if year_index < len(scenario) else scenario[-1]
-    n_reno = int(p * n_batiments)
+    n_reno = int(np.round(np.sum(coverage_vector)))
+    sorted_indices = np.argsort(-coverage_vector)
+    idx_reno = sorted_indices[:n_reno]
+    idx_non_reno = sorted_indices[n_reno:]
+
+    df_reno = df.iloc[idx_reno].copy()
+    df_non_reno = df.iloc[idx_non_reno].copy()
+
+    # 🔍 Debug détaillé
+    logging.debug(f"\n🔎 Year index: {year_index}")
+    logging.debug(f"🧮 Total buildings: {n_batiments} | Renovated: {n_reno} | Non-renovated: {n_batiments - n_reno}\n")
+
+    # 🚨 DIAGNOSTIC: Vérifier si les données rénovées existent
+    logging.debug("🔍 Diagnostic des données rénovées:")
+    renovated_col = 'Consommation par m² par an (en kWh/m².an)_renovated'
+    basic_col = 'Consommation par m² par an (en kWh/m².an)_basic'
     
-    # Séparer les bâtiments rénovés et non rénovés
-    df_reno = df.iloc[:n_reno]
-    df_non_reno = df.iloc[n_reno:]
+    logging.debug(f"📊 Colonnes disponibles: {list(df.columns)}")
+    logging.debug(f"📈 Valeurs rénovées non-nulles: {df[renovated_col].notna().sum()}/{len(df)}")
+    logging.debug(f"📈 Valeurs rénovées > 0: {(df[renovated_col] > 0).sum()}/{len(df)}")
+    logging.debug(f"📈 Valeurs basic non-nulles: {df[basic_col].notna().sum()}/{len(df)}")
+    
+    # 🚨 CORRECTION: Gérer les valeurs manquantes ou nulles
+    if df[renovated_col].isna().all() or (df[renovated_col] == 0).all():
+        logging.debug("⚠️  ATTENTION: Toutes les valeurs rénovées sont nulles ou 0!")
+        logging.debug("🔧 Application d'une correction: utilisation d'un facteur de réduction sur les valeurs basic")
+        
+        # Facteur de réduction typique pour la rénovation (30-50% de réduction)
+        reduction_factor = 0.6  # 40% de réduction
+        
+        # Calculer les valeurs rénovées à partir des valeurs basic
+        df_reno_corrected = df_reno.copy()
+        df_reno_corrected[renovated_col] = df_reno[basic_col] * reduction_factor
+        
+        reno_consumption = df_reno_corrected[renovated_col].fillna(0)
+        logging.debug(f"✅ Valeurs rénovées corrigées - Min: {reno_consumption.min():.1f}, Max: {reno_consumption.max():.1f}, Mean: {reno_consumption.mean():.1f}")
+    else:
+        reno_consumption = df_reno[renovated_col].fillna(0)
+    
+    non_reno_consumption = df_non_reno[basic_col].fillna(0)
 
-    # Créer un DataFrame temporaire avec les consommations
-    # Gérer les NaNs potentiels dans les colonnes sources avant concaténation
-    reno_consumption = df_reno['Consommation par m² par an (en kWh/m².an)'].fillna(0)
-    non_reno_consumption = df_non_reno['Consommation par m² par an (en kWh/m².an)_basic'].fillna(0)
+    logging.debug("\n🧪 Rénovés (Consommation par m² par an):")
+    logging.debug(reno_consumption.describe())
+    
+    logging.debug("\n🧪 Non-rénovés (Consommation par m² par an - basic):")
+    logging.debug(non_reno_consumption.describe())
 
+    logging.debug("\n📉 Vecteur coverage (résumé):")
+    logging.debug(f"Min: {coverage_vector.min():.3f}, Max: {coverage_vector.max():.3f}, Mean: {coverage_vector.mean():.3f}")
+    logging.debug(f"📊 Extrait coverage_vector: {coverage_vector[:10]}...")
+
+    logging.debug(f"\n📌 Indices rénovés (top {len(idx_reno)}): {idx_reno[:10]}...")
+    logging.debug(f"📌 Indices non-rénovés (reste): {idx_non_reno[:10]}...")
+
+    logging.debug("\n📊 Valeurs consommation rénovés (extrait):")
+    logging.debug(reno_consumption.head())
+
+    logging.debug("\n📊 Valeurs consommation non-rénovés (extrait):")
+    logging.debug(non_reno_consumption.head())
+
+    # DataFrame temporaire pour manipulation sans toucher à df
     df_temp = pd.DataFrame({
         'renovated': [True] * len(df_reno) + [False] * len(df_non_reno),
-        'energy_type': pd.concat([df_reno['energie_imope'], df_non_reno['energie_imope']]),
-        'consumption_m2': pd.concat([reno_consumption, non_reno_consumption])
+        'energy_type': pd.concat([df_reno['energie_imope'], df_non_reno['energie_imope']], ignore_index=True),
+        'consumption_m2': pd.concat([reno_consumption, non_reno_consumption], ignore_index=True)
     })
 
-    # Clipper les valeurs pour correspondre au range_x de l'histogramme et s'assurer que tous les bâtiments sont comptés.
-    # Le range_x dans create_dynamic_histogram est [0, 600]
-    df_temp['consumption_m2'] = df_temp['consumption_m2'].clip(lower=0, upper=600)
+    logging.debug("\n🧮 Distribution finale (avant clip):")
+    logging.debug(df_temp['consumption_m2'].describe())
 
-    return {
+    df_temp['consumption_m2'] = df_temp['consumption_m2'].clip(lower=0, upper=20000)
+
+    # ✅ Vérification finale
+    reno_data = df_temp[df_temp['renovated'] == True]
+    non_reno_data = df_temp[df_temp['renovated'] == False]
+    
+    logging.debug(f"\n✅ Résultat final:")
+    logging.debug(f"📊 Rénovés - Count: {len(reno_data)}, Mean: {reno_data['consumption_m2'].mean():.1f}, Min: {reno_data['consumption_m2'].min():.1f}")
+    logging.debug(f"📊 Non-rénovés - Count: {len(non_reno_data)}, Mean: {non_reno_data['consumption_m2'].mean():.1f}, Min: {non_reno_data['consumption_m2'].min():.1f}")
+
+    # ✅ Résultat encapsulé proprement
+    solution = {
         'consumption_m2': df_temp['consumption_m2'].values,
         'renovated': df_temp['renovated'].values,
         'energy_type': df_temp['energy_type'].values,
         'n_renovated': n_reno,
         'n_total': n_batiments
     }
+
+    return solution
+
 
 def create_evolution_chart(annees, df, scenario, title="Évolution des consommations"):
     """
@@ -377,27 +461,39 @@ def create_evolution_chart(annees, df, scenario, title="Évolution des consommat
     
     return fig
 
-def create_dynamic_histogram(df, scenario_temporel, title="Distribution des consommations par m²"):
+def create_dynamic_histogram(df, scenario_temporel, title="Distribution des consommations par m²"): 
     """
     Crée un histogramme animé montrant l'évolution de la distribution des consommations par m².
-    Cette version utilise un binning manuel et px.bar pour garantir une largeur de barre constante.
     """
-    scenario_temporel = scenario_temporel * (st.session_state["coverage_rate"] / 100.0)
-    # 1. Obtenir les données pour toutes les années
+    coverage_by_useType = st.session_state["coverage_rates"]  # ex: {"Résidentiel": 30, "Tertiaire": 20}
+
+    # Créer une série avec "Résidentiel" si UseType == "LOGEMENT", sinon "Tertiaire"
+    mapped_useType = df['UseType'].apply(lambda x: "Résidentiel" if x == "LOGEMENT" else "Tertiaire")
+
+    # Maintenant on récupère le coverage correspondant
+    coverage_series = mapped_useType.map(coverage_by_useType).fillna(0) / 100.0
+    
+    # coverage_matrix shape = (n_batiments, n_années)
+    coverage_matrix = np.outer(coverage_series, scenario_temporel)  
+
     all_data = []
     for i, year in enumerate(annees):
-        dist_data = get_building_consumption_distribution(df, scenario_temporel, i)
+        # Passer la colonne i = taux de couverture pour l'année i pour chaque bâtiment
+        coverage_appliquee = coverage_matrix[:, i]
+        dist_data = get_building_consumption_distribution(df, coverage_appliquee, year_index=i)
+
         year_df = pd.DataFrame({
             'consumption_m2': dist_data['consumption_m2'],
             'renovated': dist_data['renovated'],
             'year': year
         })
         all_data.append(year_df)
+
     full_df = pd.concat(all_data, ignore_index=True)
 
     # 2. Définir les classes (bins) manuellement
     bin_size = 10  # Taille de chaque classe
-    max_val = 800
+    max_val = 1200 #! Important pour l'affichage
     bins = np.arange(0, max_val + bin_size, bin_size)
     bin_labels = [f'{i}-{i+bin_size}' for i in bins[:-1]]
 
@@ -435,7 +531,7 @@ def create_dynamic_histogram(df, scenario_temporel, title="Distribution des cons
             'count': 'Nombre de bâtiments',
             'renovated_label': 'Statut de rénovation'
         },
-        color_discrete_map={'Rénové': '#636EFA', 'Non-rénové': '#EF553B'},
+        color_discrete_map={'Rénové': '#636EFA', 'Non-rénové': "#E30B0B"},
         category_orders={"renovated_label": ['Non-rénové', 'Rénové']}
     )
 
