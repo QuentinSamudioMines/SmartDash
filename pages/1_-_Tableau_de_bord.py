@@ -577,7 +577,7 @@ def display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees):
 def display_assumptions(heating_efficiency_map, electricity_carbone_factor, 
                        facteurs_carbone, annees):
     """Affiche la section des hypothèses et paramètres utilisés"""
-    st.header("🔎 Hypothèses")
+    st.header("🔎 Hypothèses de simulation")
     
     # === ÉVOLUTION DES FACTEURS CARBONE ===
     st.subheader("Évolution des facteurs carbone (kgCO₂/kWh)")
