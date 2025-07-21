@@ -112,17 +112,25 @@ def calculate_scenario_consumption(gdf, params, year):
         
         # Récupération du scénario et calcul du taux de rénovation
         scenario_data = scenarios_temporelles[params["scenario_name"]]
-        scenario_data = scenario_data * (params['coverage_rate'] / 100.0)
+        scenario_data_residentiel = scenario_data * (params['coverage_rates']["Résidentiel"] / 100.0)
+        scenario_data_tertiaire = scenario_data * (params['coverage_rates']["Tertiaire"] / 100.0)
         year_index = list(annees).index(year)
-        renovation_percentage = scenario_data[year_index]
-        n_reno = int(renovation_percentage * len(gdf_sorted))
+        renovation_percentage_residentiel = scenario_data_residentiel[year_index]
+        renovation_percentage_tertiaire = scenario_data_tertiaire[year_index]
+        n_reno_residentiel = int(renovation_percentage_residentiel * len(gdf_sorted))
+        n_reno_tertiaire = int(renovation_percentage_tertiaire * len(gdf_sorted))
         
         # Calcul des consommations actuelles
         gdf_sorted['conso_actuelle'] = gdf_sorted['Consommation par m² par an (en kWh/m².an)_basic']
         
         # Application des rénovations
-        if n_reno > 0:
-            reno_indices = gdf_sorted.head(n_reno).index
+        if n_reno_residentiel > 0:
+            reno_indices = gdf_sorted[gdf_sorted['UseType'] == 'LOGEMENT'].head(n_reno_residentiel).index
+            gdf_sorted.loc[reno_indices, 'conso_actuelle'] = gdf_sorted.loc[
+                reno_indices, 'Consommation par m² par an (en kWh/m².an)'
+            ]
+        if n_reno_tertiaire > 0:
+            reno_indices = gdf_sorted[gdf_sorted['UseType'] == 'LOGEMENT'].head(n_reno_tertiaire).index
             gdf_sorted.loc[reno_indices, 'conso_actuelle'] = gdf_sorted.loc[
                 reno_indices, 'Consommation par m² par an (en kWh/m².an)'
             ]
@@ -140,7 +148,10 @@ def get_session_parameters():
         'strategy_name': st.session_state['strategy_name'],
         'usage_selection': st.session_state['usage_selection'], 
         'substitutions': st.session_state.get('substitutions', []),
-        'coverage_rate': st.session_state.get('coverage_rate', 30)
+        'coverage_rates': st.session_state.get('coverage_rates', {
+        "Résidentiel": 30,
+        "Tertiaire": 20
+    })
     }
 
 def setup_sidebar_controls(params, city_gdf):
@@ -164,10 +175,12 @@ def setup_sidebar_controls(params, city_gdf):
         com_codes = city_gdf['NOM_COM'].dropna().astype(str).unique().tolist()
         com_codes_sorted = sorted(com_codes, key=lambda x: str(x).zfill(10))
         com_options = ["Toutes les communes"] + com_codes_sorted
+        default_selected_com = st.session_state.get('selected_com', com_options[0])
         
         selected_com = st.selectbox(
             "Filtrer par quartier :",
             options=com_options,
+            index=com_options.index(default_selected_com),
             help="Sélectionnez un quartier spécifique ou visualisez tous les bâtiments"
         )
     
@@ -180,7 +193,8 @@ def display_simulation_parameters(params, selected_year):
     """Affiche les paramètres de la simulation en cours"""
     with st.sidebar.expander("📋 Paramètres de simulation", expanded=True):
         st.markdown("**Configuration actuelle :**")
-        st.markdown(f"- **Taux de rénovation :** `{params['coverage_rate']:.0f}%`")
+        st.markdown(f"- **Taux de rénovation pour le résidentiel:** `{params['coverage_rates']["Résidentiel"]:.0f}%`")
+        st.markdown(f"- **Taux de rénovation pour le tertiaire:** `{params['coverage_rates']["Tertiaire"]:.0f}%`")
         st.markdown(f"- **Scénario :** `{params['scenario_name']}`")
         st.markdown(f"- **Stratégie :** `{params['strategy_name']}`")
         st.markdown(f"- **Périmètre :** `{params['usage_selection']}`")
@@ -198,10 +212,15 @@ def display_simulation_parameters(params, selected_year):
         # Calcul et affichage du taux de rénovation pour l'année
         try:
             scenario_data = scenarios_temporelles[params['scenario_name']]
-            scenario_data = scenario_data * (params['coverage_rate'] / 100.0)
+            scenario_data_residentiel = scenario_data * (params['coverage_rates']["Résidentiel"] / 100.0)
+            scenario_data_tertiaire = scenario_data * (params['coverage_rates']["Tertiaire"] / 100.0)
+
             year_index = list(annees).index(selected_year)
-            renovation_rate = scenario_data[year_index]
-            st.markdown(f"- **Taux de rénovation en {selected_year} :** `{renovation_rate:.1%}`")
+            renovation_rate_residentiel = scenario_data_residentiel[year_index]
+            renovation_rate_tertiaire = scenario_data_tertiaire[year_index]
+            st.markdown(f"- **Taux de rénovation pour le résidentiel en {selected_year} :** `{renovation_rate_residentiel:.1%}`")
+            st.markdown(f"- **Taux de rénovation pour le tertiaire en {selected_year} :** `{renovation_rate_tertiaire:.1%}`")
+
         except:
             st.markdown("- **Taux de rénovation :** *Calcul impossible*")
 

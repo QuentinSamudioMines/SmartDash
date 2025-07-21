@@ -117,22 +117,21 @@ def setup_study_perimeter_selection():
         )
     
     # Sélection géographique CUD (Communauté Urbaine de Dunkerque)
-    with st.sidebar.expander("🏛️ Périmètre géographique", expanded=False):
-        st.markdown("""
-        **Filtrez sur les bâtiments de la Communauté Urbaine de Dunkerque :**
-        - ✅ **Bâtiments CUD uniquement** : Focus sur le patrimoine CUD
-        - 🌍 **Tous les bâtiments** : Analyse complète du territoire
-        """)
-        
-        cud_only = st.checkbox(
-            "Limiter aux bâtiments CUD",
-            value=False,
-            help="Si coché, seuls les bâtiments identifiés comme appartenant à la CUD seront analysés"
+    with st.sidebar.expander("🏘️ Commune", expanded=True):
+        # Préparation de la liste des communes depuis la colonne NOM_COM de city_gdf
+        com_codes = st.session_state.city_data['NOM_COM'].dropna().astype(str).unique().tolist()
+        com_codes_sorted = sorted(com_codes, key=lambda x: str(x).zfill(10))
+        com_options = ["Toutes les communes"] + com_codes_sorted
+
+        selected_com = st.selectbox(
+            "Filtrer par commune :",
+            options=com_options,
+            help="Sélectionnez une commune spécifique ou visualisez tous les bâtiments"
         )
     
-    return usage_selection, cud_only
+    return usage_selection, selected_com
 
-def display_filtered_data_stats(city_data, usage_selection, cud_only):
+def display_filtered_data_stats(city_data, usage_selection, selected_com):
     """Affiche les statistiques des données filtrées dans la sidebar"""
     # Calcul des statistiques
     residential_count = len(city_data[city_data["UseType"] == "LOGEMENT"])
@@ -141,6 +140,11 @@ def display_filtered_data_stats(city_data, usage_selection, cud_only):
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 📊 Données filtrées")
+    
+    # Affichage du périmètre d'étude
+    st.sidebar.markdown("**Périmètre d'étude sélectionné :**")
+    st.sidebar.markdown(f"**Commune sélectionnée :** {selected_com}")
+    st.sidebar.markdown(f"**Type d'usage :** {usage_selection}")
     
     # Affichage des métriques
     st.sidebar.metric("Total bâtiments", total_buildings)
@@ -156,14 +160,6 @@ def display_filtered_data_stats(city_data, usage_selection, cud_only):
         st.sidebar.metric("🏠 Résidentiel", residential_count)
     else:
         st.sidebar.metric("🏢 Tertiaire", tertiary_count)
-    
-    # Information sur le filtre CUD
-    if cud_only:
-        if 'is_cud' in city_data.columns:
-            cud_buildings = len(city_data[city_data['is_cud'] == True])
-            st.sidebar.info(f"🏛️ Analyse limitée aux {cud_buildings} bâtiments CUD")
-        else:
-            st.sidebar.warning("⚠️ Filtre CUD non disponible - Tous les bâtiments inclus")
     
     # Calcul et affichage de la consommation totale
     original_profile = calculate_energy_profile_by_sector(city_data)
@@ -632,11 +628,11 @@ def main():
     original_city_data = initialize_data()
     
     # === CONFIGURATION DU PÉRIMÈTRE D'ÉTUDE ===
-    usage_selection, cud_only = setup_study_perimeter_selection()
+    usage_selection, selected_com = setup_study_perimeter_selection()
     
     # Application des filtres sur les données
     st.session_state.city_data = filter_data_by_selection(
-        original_city_data, usage_selection, cud_only
+        original_city_data, usage_selection, selected_com
     )
     
     # Vérification que des données existent après filtrage
@@ -645,7 +641,7 @@ def main():
         st.stop()
     
     # Affichage des statistiques des données filtrées
-    display_filtered_data_stats(st.session_state.city_data, usage_selection, cud_only)
+    display_filtered_data_stats(st.session_state.city_data, usage_selection, selected_com)
     
     # === CALCULS PRÉPARATOIRES ===
     heating_efficiency_map = calculate_heating_efficiencies(st.session_state.city_data)
@@ -699,7 +695,9 @@ def main():
         st.session_state.emissions_par_vecteur = emissions_par_vecteur
         st.session_state.strategie = strategie
         st.session_state.scenario_temporelles = scenario_temporelles
-        st.session_state.city_data = df_simulation
+        st.session_state.selected_com = selected_com
+        st.session_state.city_data_simulated = df_simulation
+
 
     # Si simulation pas lancée maintenant, vérifier si résultats en session
     if not run_simulation:
@@ -713,7 +711,8 @@ def main():
             emissions_par_vecteur = st.session_state.emissions_par_vecteur
             strategie = st.session_state.strategie
             scenario_temporelles = st.session_state.scenario_temporelles
-            city_data = st.session_state.city_data
+            selected_com = st.session_state.selected_com
+            df_simulation = st.session_state.city_data_simulated
         else:
             st.info("Cliquez sur le bouton 🚀 dans la sidebar pour lancer la simulation.")
             st.stop()

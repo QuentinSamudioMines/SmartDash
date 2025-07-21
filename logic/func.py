@@ -379,28 +379,48 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
 
 @st.cache_data
 def load_sample_data():
-    """Charge et concatène les trois parties du fichier city_file."""
+    """Charge et concatène les parties du fichier city_file, en ajoutant part5 pour chaque commune."""
     part1 = pd.read_pickle("city_part1.pkl")
     part2 = pd.read_pickle("city_part2.pkl")
     part3 = pd.read_pickle("city_part3.pkl")
     part4 = pd.read_pickle("city_part4.pkl")
 
-    #"PAC Air-Air" : 3, "PAC Air-Eau" : 3, "PAC Eau-Eau" : 4, "PAC Géothermique" : 5
+    # Concaténation des parties principales
+    city = pd.concat([part1, part2, part3, part4], ignore_index=True)
+
+    # Liste des communes uniques
+    communes = city['NOM_COM'].dropna().unique()
+
+    # Base part5
     part5 = pd.DataFrame({
-        "total_energy_consumption_basic": [0, 0, 0,0,0,0],
-        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0,0, 0, 0],
-        "total_energy_consumption_renovated": [0, 0, 0,0, 0, 0],
-        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0,0, 0, 0],
-        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
-        "heating_efficiency": [3.0, 4.0, 5.0,3.0, 4.0, 5.0],
-        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT","Autre", "Autre", "Autre"],
-    })  # Ajout d'une ligne vide pour éviter les erreurs de concaténation
+        "total_energy_consumption_basic": [0, 0, 0, 0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0],
+        "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
+        "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0],
+        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre"],
+    })
 
-    city = pd.concat([part1, part2, part3,part4, part5], ignore_index=True)
-    return city
+    # Liste pour stocker les duplications
+    part5_duplicated_list = []
+
+    for com in communes:
+        # Dupliquer part5 et assigner la commune
+        temp = part5.copy()
+        temp['NOM_COM'] = com
+        part5_duplicated_list.append(temp)
+
+    # Concaténer toutes les duplications de part5
+    part5_full = pd.concat(part5_duplicated_list, ignore_index=True)
+
+    # Concaténer avec le dataframe principal
+    city_full = pd.concat([city, part5_full], ignore_index=True)
+
+    return city_full
 
 
-def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_only: bool = False):
+def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, selected_com: bool = False):
     """
     Filtre les données selon la sélection d'usage et optionnellement sur les bâtiments CUD.
     
@@ -414,14 +434,8 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, cud_
     """
     
     # Filtre CUD si demandé (supposant qu'il existe une colonne 'is_cud' ou similaire)
-    if cud_only:
-        if 'is_cud' in city_data.columns:
-            filtered_data = city_data[city_data['is_cud'] == True].copy()
-        else:
-            # Si la colonne n'existe pas, on peut utiliser d'autres critères
-            # Par exemple, si les bâtiments CUD ont un identifiant spécifique
-            st.warning("⚠️ En développement : filtre CUD non disponible. Toutes les données seront utilisées.")
-            filtered_data = city_data.copy()
+    if selected_com != "Toutes les communes":
+        filtered_data = city_data[city_data["NOM_COM"] == selected_com]
     else:
         filtered_data = city_data.copy()
     
