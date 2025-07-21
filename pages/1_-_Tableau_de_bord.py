@@ -349,10 +349,10 @@ def display_results(conso_par_vecteur,
     fig_distribution = create_dynamic_histogram(df_selected, scenario_data)
     st.plotly_chart(fig_distribution, use_container_width=True)
 
-def display_summary_metrics(conso_par_vecteur, emissions_par_vecteur, city_data):
+def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur):
     """Affiche le bilan énergétique et carbone avec répartition par type de bâtiment et vecteur énergétique"""
     # Calculate comprehensive results
-    bilan_stats = synthesize_results(conso_par_vecteur, emissions_par_vecteur, city_data)
+    bilan_stats = synthesize_results(city_data, conso_par_vecteur, emissions_par_vecteur)
     
     st.subheader("📊 Bilan énergétique et carbone (2024-2050)")
     
@@ -496,20 +496,27 @@ def display_summary_metrics(conso_par_vecteur, emissions_par_vecteur, city_data)
                 'Consommation 2024 (MWh)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["conso_2024"],
                 'Consommation 2050 (MWh)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["conso_2050"],
                 'Part 2024 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_2024"],
+                'Part 2050 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_2050"]
             })
         
         bld_df = pd.DataFrame(bld_data).set_index('Type')
         
         # Show metrics
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         
         with col1:
             st.markdown("**Consommation par type**")
             fig = px.pie(bld_df, values='Part 2024 (%)', names=bld_df.index,
                         title="Répartition initiale (2024)")
             st.plotly_chart(fig, use_container_width=True)
-        
+
         with col2:
+            st.markdown("**Consommation par type**")
+            fig = px.pie(bld_df, values='Part 2050 (%)', names=bld_df.index,
+                        title="Répartition final (2050)")
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col3:
             st.markdown("**Évolution des consommations**")
             fig = px.bar(bld_df[['Consommation 2024 (MWh)', 'Consommation 2050 (MWh)']],
                         barmode='group', labels={'value': 'MWh'})
@@ -548,6 +555,7 @@ def display_summary_metrics(conso_par_vecteur, emissions_par_vecteur, city_data)
             """)
         else:
             st.info("Données par type de bâtiment non disponibles")
+
 def display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees):
     """Affiche les tableaux détaillés par énergie"""
     st.subheader("Détails par type d'énergie")
@@ -673,7 +681,7 @@ def main():
         strategie = strategies[selected_strategy]
         scenario_temporelles = scenarios_temporelles[selected_scenario]
 
-        conso_par_vecteur, emissions_par_vecteur = simulate(
+        df_simulation, conso_par_vecteur, emissions_par_vecteur = simulate(
             strategie,
             coverage_rates,
             scenario_temporelles,
@@ -691,6 +699,7 @@ def main():
         st.session_state.emissions_par_vecteur = emissions_par_vecteur
         st.session_state.strategie = strategie
         st.session_state.scenario_temporelles = scenario_temporelles
+        st.session_state.city_data = df_simulation
 
     # Si simulation pas lancée maintenant, vérifier si résultats en session
     if not run_simulation:
@@ -704,6 +713,7 @@ def main():
             emissions_par_vecteur = st.session_state.emissions_par_vecteur
             strategie = st.session_state.strategie
             scenario_temporelles = st.session_state.scenario_temporelles
+            city_data = st.session_state.city_data
         else:
             st.info("Cliquez sur le bouton 🚀 dans la sidebar pour lancer la simulation.")
             st.stop()
@@ -714,7 +724,7 @@ def main():
         emissions_par_vecteur, strategie, annees, scenario_temporelles
     )
     st.markdown("---") 
-    display_summary_metrics(conso_par_vecteur, emissions_par_vecteur, st.session_state.city_data)
+    display_summary_metrics(df_simulation, conso_par_vecteur, emissions_par_vecteur)
     st.markdown("---") 
     display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees)
     st.markdown("---")  # Séparateur visuel

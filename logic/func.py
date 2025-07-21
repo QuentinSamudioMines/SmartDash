@@ -148,8 +148,31 @@ def simulate(df, coverage_by_group, scenario_temporel, vecteurs_energie, efficie
             facteur = facteurs_carbone.get(vec, np.zeros(n_annees))[i_annee]
             emissions = conso_vect[vec] * facteur
             emissions_par_vecteur[vec].append(emissions)
+    
+    # === Marquer le statut de rénovation à 2050 ===
+    n_reno_res_final = int(scenario_res[-1] * n_res)
+    n_reno_tert_final = int(scenario_tert[-1] * n_tert)
 
-    return conso_par_vecteur, emissions_par_vecteur
+    df_reno_final = pd.concat([
+        df_res_sorted.iloc[:n_reno_res_final],
+        df_tert_sorted.iloc[:n_reno_tert_final]
+    ])
+    df_reno_final = df_reno_final.copy()
+    df_reno_final["etat_renovation_2050"] = "Rénové"
+    df_reno_final["conso_finale_2050"] = df_reno_final["total_energy_consumption_renovated"] # en kWh
+
+    df_non_reno_final = pd.concat([
+        df_res_sorted.iloc[n_reno_res_final:],
+        df_tert_sorted.iloc[n_reno_tert_final:]
+    ])
+    df_non_reno_final = df_non_reno_final.copy()
+    df_non_reno_final["etat_renovation_2050"] = "Non rénové"
+    df_non_reno_final["conso_finale_2050"] = df_non_reno_final["total_energy_consumption_basic"] # en kWh
+
+    # === Concatenation finale ===
+    df_simulated = pd.concat([df_reno_final, df_non_reno_final], ignore_index=True)
+
+    return df_simulated ,conso_par_vecteur, emissions_par_vecteur
 
 def synthesize_results(conso_par_vecteur, emissions_par_vecteur):
     """Calcule les bilans énergétiques et carbone."""
@@ -168,13 +191,13 @@ def synthesize_results(conso_par_vecteur, emissions_par_vecteur):
         "Réduction émissions (%)": 100 * (total_emi_2024 - total_emi_2050) / total_emi_2024,
     }
 
-def synthesize_results(conso_par_vecteur, emissions_par_vecteur, city_data=None):
+def synthesize_results(df, conso_par_vecteur, emissions_par_vecteur):
     """Calcule les bilans énergétiques et carbone avec répartition par type de bâtiment et vecteur énergétique.
     
     Args:
+        df (pd.DataFrame): DataFrame contenant les données des bâtiments
         conso_par_vecteur (dict): Dictionnaire des consommations par vecteur énergétique
         emissions_par_vecteur (dict): Dictionnaire des émissions par vecteur énergétique
-        city_data (pd.DataFrame): Données des bâtiments (optionnel pour répartition par type)
     
     Returns:
         dict: Dictionnaire contenant tous les indicateurs calculés
@@ -205,13 +228,13 @@ def synthesize_results(conso_par_vecteur, emissions_par_vecteur, city_data=None)
     
     # === RÉPARTITION PAR TYPE DE BÂTIMENT (si city_data disponible) ===
     building_breakdown = {}
-    if city_data is not None and "UseType" in city_data.columns:
+    if df is not None and "UseType" in df.columns:
         # Calcul des consommations initiales par type
-        residential_mask = city_data["UseType"] == "LOGEMENT"
-        initial_residential_conso = city_data.loc[residential_mask, "total_energy_consumption_basic"].sum()
-        initial_tertiary_conso = city_data.loc[~residential_mask, "total_energy_consumption_basic"].sum()
-        final_residential_conso = city_data.loc[residential_mask, "total_energy_consumption_renovated"].sum()
-        final_tertiary_conso = city_data.loc[~residential_mask, "total_energy_consumption_renovated"].sum()
+        residential_mask = df["UseType"] == "LOGEMENT"
+        initial_residential_conso = df.loc[residential_mask, "total_energy_consumption_basic"].sum()
+        initial_tertiary_conso = df.loc[~residential_mask, "total_energy_consumption_basic"].sum()
+        final_residential_conso = df.loc[residential_mask, "conso_finale_2050"].sum()
+        final_tertiary_conso = df.loc[~residential_mask, "conso_finale_2050"].sum()
         
         # Estimation de la répartition en 2050 (approximation)
         # (Note: Ceci est une simplification - une vraie implémentation nécessiterait de suivre chaque bâtiment)
@@ -221,11 +244,13 @@ def synthesize_results(conso_par_vecteur, emissions_par_vecteur, city_data=None)
                     "conso_2024": initial_residential_conso,
                     "conso_2050": final_residential_conso, 
                     "share_2024": initial_residential_conso / (initial_residential_conso + initial_tertiary_conso) * 100,
+                    "share_2050": final_residential_conso / (final_residential_conso + final_tertiary_conso) * 100
                 },
                 "tertiary": {
                     "conso_2024": initial_tertiary_conso,
                     "conso_2050": final_tertiary_conso, 
                     "share_2024": initial_tertiary_conso / (initial_residential_conso + initial_tertiary_conso) * 100,
+                    "share_2050": final_tertiary_conso / (final_residential_conso + final_tertiary_conso) * 100
                 }
             }
         }
@@ -414,7 +439,7 @@ def get_building_consumption_distribution(df, coverage_vector, year_index):
 
     n_batiments = len(df)
     n_reno = int(np.round(np.sum(coverage_vector)))
-    sorted_indices = np.argsort(-coverage_vector)
+    sorted_indices = np.argsort(coverage_vector)
     idx_reno = sorted_indices[:n_reno]
     idx_non_reno = sorted_indices[n_reno:]
 
