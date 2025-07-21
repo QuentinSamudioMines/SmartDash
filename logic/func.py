@@ -168,6 +168,102 @@ def synthesize_results(conso_par_vecteur, emissions_par_vecteur):
         "Réduction émissions (%)": 100 * (total_emi_2024 - total_emi_2050) / total_emi_2024,
     }
 
+def synthesize_results(conso_par_vecteur, emissions_par_vecteur, city_data=None):
+    """Calcule les bilans énergétiques et carbone avec répartition par type de bâtiment et vecteur énergétique.
+    
+    Args:
+        conso_par_vecteur (dict): Dictionnaire des consommations par vecteur énergétique
+        emissions_par_vecteur (dict): Dictionnaire des émissions par vecteur énergétique
+        city_data (pd.DataFrame): Données des bâtiments (optionnel pour répartition par type)
+    
+    Returns:
+        dict: Dictionnaire contenant tous les indicateurs calculés
+    """
+    # === CALCULS GLOBAUX ===
+    total_conso_2024 = sum([conso[0] for conso in conso_par_vecteur.values()])
+    total_conso_2050 = sum([conso[-1] for conso in conso_par_vecteur.values()])
+    total_emi_2024 = sum([em[0] for em in emissions_par_vecteur.values()])
+    total_emi_2050 = sum([em[-1] for em in emissions_par_vecteur.values()])
+    
+    # === RÉPARTITION PAR VECTEUR ÉNERGÉTIQUE ===
+    energy_breakdown = {
+        "by_energy": {
+            "conso_2024": {energy: conso[0] for energy, conso in conso_par_vecteur.items()},
+            "conso_2050": {energy: conso[-1] for energy, conso in conso_par_vecteur.items()},
+            "emissions_2024": {energy: em[0] for energy, em in emissions_par_vecteur.items()},
+            "emissions_2050": {energy: em[-1] for energy, em in emissions_par_vecteur.items()},
+        }
+    }
+    
+    # Calcul des parts relatives
+    for metric in ["conso_2024", "conso_2050", "emissions_2024", "emissions_2050"]:
+        total = sum(energy_breakdown["by_energy"][metric].values())
+        energy_breakdown["by_energy"][f"{metric}_pct"] = {
+            energy: (value / total * 100) if total > 0 else 0
+            for energy, value in energy_breakdown["by_energy"][metric].items()
+        }
+    
+    # === RÉPARTITION PAR TYPE DE BÂTIMENT (si city_data disponible) ===
+    building_breakdown = {}
+    if city_data is not None and "UseType" in city_data.columns:
+        # Calcul des consommations initiales par type
+        residential_mask = city_data["UseType"] == "LOGEMENT"
+        initial_residential_conso = city_data.loc[residential_mask, "total_energy_consumption_basic"].sum()
+        initial_tertiary_conso = city_data.loc[~residential_mask, "total_energy_consumption_basic"].sum()
+        final_residential_conso = city_data.loc[residential_mask, "total_energy_consumption_renovated"].sum()
+        final_tertiary_conso = city_data.loc[~residential_mask, "total_energy_consumption_renovated"].sum()
+        
+        # Estimation de la répartition en 2050 (approximation)
+        # (Note: Ceci est une simplification - une vraie implémentation nécessiterait de suivre chaque bâtiment)
+        building_breakdown = {
+            "by_building_type": {
+                "residential": {
+                    "conso_2024": initial_residential_conso,
+                    "conso_2050": final_residential_conso, 
+                    "share_2024": initial_residential_conso / (initial_residential_conso + initial_tertiary_conso) * 100,
+                },
+                "tertiary": {
+                    "conso_2024": initial_tertiary_conso,
+                    "conso_2050": final_tertiary_conso, 
+                    "share_2024": initial_tertiary_conso / (initial_residential_conso + initial_tertiary_conso) * 100,
+                }
+            }
+        }
+    
+    # === INDICATEURS DE PERFORMANCE ===
+    intensity_2024 = (total_emi_2024 / total_conso_2024) * 1000 if total_conso_2024 > 0 else 0  # kgCO2/MWh
+    intensity_2050 = (total_emi_2050 / total_conso_2050) * 1000 if total_conso_2050 > 0 else 0
+    
+    # === RASSEMBLEMENT DES RÉSULTATS ===
+    results = {
+        # Totaux globaux
+        "Consommation 2024 (MWh)": total_conso_2024,
+        "Consommation 2050 (MWh)": total_conso_2050,
+        "Réduction conso (MWh)": total_conso_2024 - total_conso_2050,
+        "Réduction conso (%)": 100 * (total_conso_2024 - total_conso_2050) / total_conso_2024 if total_conso_2024 > 0 else 0,
+        
+        # Émissions
+        "Émissions 2024 (tCO₂)": total_emi_2024,
+        "Émissions 2050 (tCO₂)": total_emi_2050,
+        "Réduction émissions (tCO₂)": total_emi_2024 - total_emi_2050,
+        "Réduction émissions (%)": 100 * (total_emi_2024 - total_emi_2050) / total_emi_2024 if total_emi_2024 > 0 else 0,
+        
+        # Intensité carbone
+        "Intensité carbone 2024 (kgCO₂/MWh)": intensity_2024,
+        "Intensité carbone 2050 (kgCO₂/MWh)": intensity_2050,
+        "Réduction intensité (%)": 100 * (intensity_2024 - intensity_2050) / intensity_2024 if intensity_2024 > 0 else 0,
+        
+        # Répartitions
+        "energy_breakdown": energy_breakdown,
+        "building_breakdown": building_breakdown,
+        
+        # Métadonnées
+        "energy_vectors": list(conso_par_vecteur.keys()),
+        "years": len(next(iter(conso_par_vecteur.values()))) if conso_par_vecteur else 0,
+    }
+    
+    return results
+
 def create_consumption_chart(annees, conso_par_vecteur, title="Consommation par énergie"):
     """Crée un graphique de consommation par énergie"""
     fig = go.Figure()
