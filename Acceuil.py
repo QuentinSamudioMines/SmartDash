@@ -128,7 +128,6 @@ with col2:
 st.markdown("""
 ### 🧾 Interprétation
 
-- Une majorité de points se situent entre les lignes ±10 %, ce qui montre une bonne cohérence globale du modèle.
 - Des écarts importants s’observent sur certaines IRIS, souvent liés à des **incertitudes sur la surface**, l’usage ou le système énergétique.
 - Le modèle a tendance à **surestimer** les consommations, en moyenne de **30 %**, avec un **écart type également d’environ 30 %** sur les deux catégories de bâtiments (logement et autres).
 
