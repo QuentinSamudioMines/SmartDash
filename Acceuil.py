@@ -84,7 +84,7 @@ Les résultats ci-dessous comparent SmartE à trois logiciels de référence : *
 st.image("images/bestest_smarte.png", caption="Résultats des tests BESTEST-EX : comparatif SmartE vs références", use_column_width=True)
 
 st.markdown("""
-#### 📌 Interprétation des cas BESTEST
+####  Interprétation des cas BESTEST
 
 Les écarts observés sont jugés **acceptables** et confirment le bon fonctionnement du moteur physique de SmartE. Chaque cas représente un scénario spécifique de performance thermique :
 
