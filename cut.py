@@ -2,8 +2,8 @@ import logging
 import pandas as pd
 
 # Chargement des données
-city10 = pd.read_pickle("11p1_renovated_3_analyse.pkl")
-city20 = pd.read_pickle("11p2_renovated_3_analyse.pkl")
+city10 = pd.read_pickle("11p1_renovated_analyse.pkl")
+city20 = pd.read_pickle("11p2_renovated_analyse.pkl")
 
 city1 = pd.read_pickle("12p1_renovated_analyse.pkl")
 city2 = pd.read_pickle("12p2_renovated_analyse.pkl")
@@ -72,7 +72,7 @@ def filtre_commune(df, nom_de_colonnes, codes_communes_liste):
 city30 = filtre_commune(city_new, nom_de_colonnes, codes_Insee)
 print(f"Number of rows in city30: {len(city30)}")
 
-city = pd.concat([city10, city20, city30], ignore_index=True)
+city = pd.concat([city10, city20, city30])#, city30], ignore_index=True)
 print(list(city.columns))
 survivor = ["ID","geometry", "surface_habitable","Consommation annuelle (en MWh/an)_basic", "forme_juridique","Consommation par m² par an (en kWh/m².an)","UseType","CODE_IRIS","NOM_COM","Consommation par m² par an (en kWh/m².an)_basic", "Consommation annuelle (en MWh/an)", "energie_imope", "heating_efficiency"]
 
