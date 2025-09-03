@@ -15,6 +15,8 @@
 import streamlit as st
 import os
 
+from logic.func import calculate_heating_efficiencies, display_assumptions, load_sample_data
+
 # Configuration de la page
 if os.path.exists("images/logo.png"):
     st.set_page_config(
@@ -135,11 +137,27 @@ Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**
 
 **Conclusion :** La validation montre que **SmartE** offre des estimations fiables à l’échelle territoriale, avec une **marge d’erreur acceptable pour un outil d’aide à la décision**. Des améliorations sont possibles via une meilleure qualification des données d'entrée.
 
----
+---""")
 
+heating_efficiency_map = calculate_heating_efficiencies(load_sample_data())
+from logic.param import (
+    annees, 
+    electricity_carbone_factor, 
+    facteurs_carbone, 
+    scenarios_temporelles
+)
+display_assumptions(
+    heating_efficiency_map, 
+    electricity_carbone_factor, 
+    facteurs_carbone, 
+    annees
+)
+
+st.markdown("""
 ### 📬 Contact
 Pour plus d’informations ou pour une collaboration, veuillez contacter :
 - Quentin Samudio - Ingénieur de recherche - quentin.samudio@minesparis.psl.eu
 
 ---
 """)
+

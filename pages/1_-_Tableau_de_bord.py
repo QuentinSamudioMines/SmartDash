@@ -24,6 +24,7 @@ from logic.func import (
     create_dynamic_histogram,
     create_emissions_chart,
     filter_data_by_selection,
+    filtre_forme_juridique,
     load_sample_data,
     prepare_strategies,
     simulate,
@@ -106,13 +107,14 @@ def setup_study_perimeter_selection():
         **Choisissez quels types de bâtiments inclure dans l'analyse :**
         - 🏠 **Résidentiel** : Logements
         - 🏢 **Tertiaire** : Bâtiments d'activité (bureaux, commerces, etc.)
+        - 🏛️ Bâtiments pulbiques
         - 🏠+🏢 **Résidentiel + Tertiaire** 
         """)
         
         usage_selection = st.radio(
             "Secteurs à analyser",
-            options=["Résidentiel", "Tertiaire", "Résidentiel + Tertiaire"],
-            index=2,  # Par défaut : Résidentiel + Tertiaire
+            options=["Résidentiel", "Tertiaire", "Public", "Résidentiel + Tertiaire"],
+            index=3,  # Par défaut : Résidentiel + Tertiaire
             help="Définit le périmètre des bâtiments inclus dans l'analyse"
         )
     
@@ -136,6 +138,21 @@ def display_filtered_data_stats(city_data, usage_selection, selected_com):
     # Calcul des statistiques
     residential_count = len(city_data[city_data["UseType"] == "LOGEMENT"])
     tertiary_count = len(city_data[city_data["UseType"] != "LOGEMENT"])
+    formes_juridiques = [
+        #"CCOM",
+        #"CCAS",
+        #"COAG",
+        #"COLL",
+        #"COM",
+        "COMU",
+        #"DEPT",
+        #"EP",
+        #"EPA",
+        #"EPIC",
+        #"ETAT",
+    ]  # ["COMU"] #
+    city_public = filtre_forme_juridique(city_data, formes_juridiques)
+    public_count = len(city_public)
     total_buildings = len(city_data)
     
     st.sidebar.markdown("---")
@@ -158,8 +175,10 @@ def display_filtered_data_stats(city_data, usage_selection, selected_com):
             st.metric("🏢 Tertiaire", tertiary_count)
     elif usage_selection == "Résidentiel":
         st.sidebar.metric("🏠 Résidentiel", residential_count)
-    else:
+    elif usage_selection == "Tertiaire":
         st.sidebar.metric("🏢 Tertiaire", tertiary_count)
+    else:
+        st.sidebar.metric("🏛️ Public", public_count)
     
     # Calcul et affichage de la consommation totale
     original_profile = calculate_energy_profile_by_sector(city_data)
@@ -345,10 +364,10 @@ def display_results(conso_par_vecteur,
     fig_distribution = create_dynamic_histogram(df_selected, scenario_data)
     st.plotly_chart(fig_distribution, use_container_width=True)
 
-def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur):
+def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur, conso_par_type_and_vecteur, emissions_par_type_and_vecteur):
     """Affiche le bilan énergétique et carbone avec répartition par type de bâtiment et vecteur énergétique"""
     # Calculate comprehensive results
-    bilan_stats = synthesize_results(city_data, conso_par_vecteur, emissions_par_vecteur)
+    bilan_stats = synthesize_results(city_data, conso_par_vecteur, emissions_par_vecteur, conso_par_type_and_vecteur, emissions_par_type_and_vecteur)
     
     st.subheader("📊 Bilan énergétique et carbone (2024-2050)")
     
@@ -361,22 +380,22 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
     with kpi1:
         st.metric(
             "Consommation totale",
-            f"{total_conso:,.0f} MWh",
+            f"{total_conso:.0f} MWh",
             help="Somme des consommations énergétiques 2024-2050"
         )
     
     with kpi2:
         st.metric(
             "Émissions totales",
-            f"{total_emissions:,.0f} tCO₂",
+            f"{total_emissions:.0f} tCO₂",
             help="Somme des émissions carbone 2024-2050"
         )
     
     with kpi3:
         st.metric(
             "Réduction consommation",
-            f"{bilan_stats['Réduction conso (%)']:.1f}%",
-            delta=f"-{bilan_stats['Réduction conso (MWh)']:,.0f} MWh",
+            f"{bilan_stats['Réduction (%)']:.1f}%",
+            delta=f"-{bilan_stats['Réduction (MWh)']:.0f} MWh",
             help="Réduction totale 2024-2050"
         )
     
@@ -384,7 +403,7 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
         st.metric(
             "Réduction émissions",
             f"{bilan_stats['Réduction émissions (%)']:.1f}%",
-            delta=f"-{bilan_stats['Réduction émissions (tCO₂)']:,.0f} tCO₂",
+            delta=f"-{bilan_stats['Réduction émissions (tCO₂)']:.0f} tCO₂",
             help="Réduction totale 2024-2050"
         )
     
@@ -397,24 +416,24 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
         st.markdown("**Consommation énergétique**")
         st.metric(
             "2024", 
-            f"{bilan_stats['Consommation 2024 (MWh)']:,.0f} MWh"
+            f"{bilan_stats['Consommation 2024 (MWh)']:.0f} MWh"
         )
         st.metric(
             "2050",
-            f"{bilan_stats['Consommation 2050 (MWh)']:,.0f} MWh",
-            delta=f"-{bilan_stats['Réduction conso (MWh)']:,.0f} MWh ({bilan_stats['Réduction conso (%)']:.1f}%)"
+            f"{bilan_stats['Consommation 2050 (MWh)']:.0f} MWh",
+            delta=f"-{bilan_stats['Réduction (MWh)']:.0f} MWh ({bilan_stats['Réduction (%)']:.1f}%)"
         )
     
     with comp2:
         st.markdown("**Émissions carbone**")
         st.metric(
             "2024",
-            f"{bilan_stats['Émissions 2024 (tCO₂)']:,.0f} tCO₂"
+            f"{bilan_stats['Émissions 2024 (tCO₂)']:.0f} tCO₂"
         )
         st.metric(
             "2050",
-            f"{bilan_stats['Émissions 2050 (tCO₂)']:,.0f} tCO₂",
-            delta=f"-{bilan_stats['Émissions 2024 (tCO₂)'] - bilan_stats['Émissions 2050 (tCO₂)']:,.0f} tCO₂ ({bilan_stats['Réduction émissions (%)']:.1f}%)"
+            f"{bilan_stats['Émissions 2050 (tCO₂)']:.0f} tCO₂",
+            delta=f"-{bilan_stats['Émissions 2024 (tCO₂)'] - bilan_stats['Émissions 2050 (tCO₂)']:.0f} tCO₂ ({bilan_stats['Réduction émissions (%)']:.1f}%)"
         )
     
     with comp3:
@@ -453,7 +472,7 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
         # Show detailed table
         energy_df['Réduction'] = energy_df['2024'] - energy_df['2050']
         energy_df['Réduction %'] = (energy_df['Réduction'] / energy_df['2024']) * 100
-        st.dataframe(energy_df.style.format("{:,.0f}"), use_container_width=True)
+        st.dataframe(energy_df.style.format("{:.0f}"), use_container_width=True)
     
     with tab2:
         st.markdown("**Évolution des émissions par énergie**")
@@ -473,7 +492,7 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
         # Show detailed table
         em_df['Réduction'] = em_df['2024'] - em_df['2050']
         em_df['Réduction %'] = (em_df['Réduction'] / em_df['2024']) * 100
-        st.dataframe(em_df.style.format("{:,.0f}"), use_container_width=True)
+        st.dataframe(em_df.style.format("{:.0f}"), use_container_width=True)
     
     # === SECTION 4: BUILDING TYPE BREAKDOWN (if available) ===
     if bilan_stats["building_breakdown"]:
@@ -491,41 +510,120 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
                 'Type': b_name,
                 'Consommation 2024 (MWh)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["conso_2024"],
                 'Consommation 2050 (MWh)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["conso_2050"],
-                'Part 2024 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_2024"],
-                'Part 2050 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_2050"]
+                'Part 2024 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_conso_2024"],
+                'Part 2050 (%)': bilan_stats["building_breakdown"]["by_building_type"][b_type]["share_conso_2024"]
             })
         
         bld_df = pd.DataFrame(bld_data).set_index('Type')
         
         # Show metrics
-        col1, col2, col3 = st.columns(3)
-        
+    col1, col2, col3 = st.columns(3)
+
+    # Récupération des données depuis building_breakdown
+    building_data = bilan_stats.get("building_breakdown", {}).get("by_building_type", {})
+
+    # Création du DataFrame pour les visualisations
+    if building_data:
+        bld_data = {
+            'Type': ['Résidentiel', 'Tertiaire'],
+            'Consommation 2024 (MWh)': [
+                building_data.get('residential', {}).get('conso_2024', 0),
+                building_data.get('tertiary', {}).get('conso_2024', 0)
+            ],
+            'Consommation 2050 (MWh)': [
+                building_data.get('residential', {}).get('conso_2050', 0),
+                building_data.get('tertiary', {}).get('conso_2050', 0)
+            ],
+            'Part 2024 (%)': [
+                building_data.get('residential', {}).get('share_conso_2024', 0),
+                building_data.get('tertiary', {}).get('share_conso_2024', 0)
+            ],
+            'Part 2050 (%)': [
+                building_data.get('residential', {}).get('share_conso_2050', 0),
+                building_data.get('tertiary', {}).get('share_conso_2050', 0)
+            ]
+        }
+
+        bld_df = pd.DataFrame(bld_data).set_index('Type')
+
         with col1:
-            st.markdown("**Consommation par type**")
-            fig = px.pie(bld_df, values='Part 2024 (%)', names=bld_df.index,
-                        title="Répartition initiale (2024)")
+            st.markdown("**Consommation par type - 2024**")
+            fig = px.pie(
+                values=bld_df['Part 2024 (%)'], 
+                names=bld_df.index,
+                title="Répartition initiale (2024)",
+                color_discrete_sequence=['#1f77b4', '#ff7f0e']
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, use_container_width=True)
 
         with col2:
-            st.markdown("**Consommation par type**")
-            fig = px.pie(bld_df, values='Part 2050 (%)', names=bld_df.index,
-                        title="Répartition final (2050)")
+            st.markdown("**Consommation par type - 2050**")
+            fig = px.pie(
+                values=bld_df['Part 2050 (%)'], 
+                names=bld_df.index,
+                title="Répartition finale (2050)",
+                color_discrete_sequence=['#1f77b4', '#ff7f0e']
+            )
+            fig.update_traces(textposition='inside', textinfo='percent+label')
             st.plotly_chart(fig, use_container_width=True)
-        
+
         with col3:
             st.markdown("**Évolution des consommations**")
-            fig = px.bar(bld_df[['Consommation 2024 (MWh)', 'Consommation 2050 (MWh)']],
-                        barmode='group', labels={'value': 'MWh'})
+            # Restructuration des données pour le graphique en barres
+            evolution_data = pd.melt(
+                bld_df[['Consommation 2024 (MWh)', 'Consommation 2050 (MWh)']].reset_index(),
+                id_vars=['Type'],
+                var_name='Année',
+                value_name='Consommation (MWh)'
+            )
+            evolution_data['Année'] = evolution_data['Année'].str.replace('Consommation ', '').str.replace(' (MWh)', '')
+
+            fig = px.bar(
+                evolution_data, 
+                x='Type', 
+                y='Consommation (MWh)', 
+                color='Année',
+                barmode='group',
+                title="Évolution par type",
+                color_discrete_sequence=['#636EFA', '#EF553B']
+            )
+            fig.update_layout(
+                xaxis_title="Type de bâtiment",
+                yaxis_title="Consommation (MWh)"
+            )
             st.plotly_chart(fig, use_container_width=True)
-        
-        # Show detailed table
-        bld_df['Réduction (MWh)'] = bld_df['Consommation 2024 (MWh)'] - bld_df['Consommation 2050 (MWh)']
-        bld_df['Réduction (%)'] = (bld_df['Réduction (MWh)'] / bld_df['Consommation 2024 (MWh)']) * 100
-        st.dataframe(bld_df.style.format("{:,.0f}"), use_container_width=True)
-    
+
+    else:
+        st.warning("Données de répartition par type de bâtiment non disponibles")
+
+    # Optionnel : Affichage d'un tableau récapitulatif
+    if building_data:
+        st.markdown("### 📊 Tableau récapitulatif")
+
+        # Ajout des réductions calculées
+        bld_df_display = bld_df.copy()
+        bld_df_display['Réduction (MWh)'] = bld_df_display['Consommation 2024 (MWh)'] - bld_df_display['Consommation 2050 (MWh)']
+        bld_df_display['Réduction (%)'] = [
+            building_data.get('residential', {}).get('reduction_conso_pct', 0),
+            building_data.get('tertiary', {}).get('reduction_conso_pct', 0)
+        ]
+
+        # Formatage des colonnes
+        styled_df = bld_df_display.style.format({
+            'Consommation 2024 (MWh)': '{:.1f}',
+            'Consommation 2050 (MWh)': '{:.1f}',
+            'Part 2024 (%)': '{:.1f}%',
+            'Part 2050 (%)': '{:.1f}%',
+            'Réduction (MWh)': '{:.1f}',
+            'Réduction (%)': '{:.1f}%'
+        })
+
+        st.dataframe(styled_df, use_container_width=True)
+
     # === SECTION 5: ADDITIONAL INSIGHTS ===
     st.markdown("### 🔍 Analyses complémentaires")
-    
+
     # Energy transition indicators
     with st.expander("Indicateurs de transition énergétique"):
         st.markdown("""
@@ -533,22 +631,52 @@ def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur)
         - **Diversification énergétique**: Evolution du mix énergétique
         - **Efficacité énergétique**: {:.1f}% d'amélioration de l'intensité carbone
         """.format(
-            bilan_stats['Réduction émissions (%)'],
-            bilan_stats['Réduction intensité (%)']
+            bilan_stats.get('Réduction émissions (%)', 0),
+            bilan_stats.get('Réduction intensité (%)', 0)
         ))
-    
+
     # Performance comparison
     with st.expander("Comparaison sectorielle"):
-        if bilan_stats["building_breakdown"]:
-            residential_red = (bld_df.loc['Résidentiel', 'Réduction (MWh)'] / 
-                             bld_df.loc['Résidentiel', 'Consommation 2024 (MWh)']) * 100
-            tertiary_red = (bld_df.loc['Tertiaire', 'Réduction (MWh)'] / 
-                          bld_df.loc['Tertiaire', 'Consommation 2024 (MWh)']) * 100
-            
+        if building_data:
+            # Calcul des réductions directement depuis les données
+            residential_red = building_data.get('residential', {}).get('reduction_conso_pct', 0)
+            tertiary_red = building_data.get('tertiary', {}).get('reduction_conso_pct', 0)
+
+            # Affichage des émissions par secteur
+            residential_emi_red = building_data.get('residential', {}).get('reduction_emissions_pct', 0)
+            tertiary_emi_red = building_data.get('tertiary', {}).get('reduction_emissions_pct', 0)
+
             st.markdown(f"""
+            **Réduction de consommation :**
             - **Secteur résidentiel**: {residential_red:.1f}% de réduction
             - **Secteur tertiaire**: {tertiary_red:.1f}% de réduction
+
+            **Réduction d'émissions :**
+            - **Secteur résidentiel**: {residential_emi_red:.1f}% de réduction
+            - **Secteur tertiaire**: {tertiary_emi_red:.1f}% de réduction
             """)
+
+            # Graphique comparatif des performances
+            comparison_data = pd.DataFrame({
+                'Secteur': ['Résidentiel', 'Tertiaire'],
+                'Réduction consommation (%)': [residential_red, tertiary_red],
+                'Réduction émissions (%)': [residential_emi_red, tertiary_emi_red]
+            })
+
+            fig_comparison = px.bar(
+                comparison_data,
+                x='Secteur',
+                y=['Réduction consommation (%)', 'Réduction émissions (%)'],
+                title="Comparaison des performances par secteur",
+                barmode='group',
+                color_discrete_sequence=['#2E86AB', '#A23B72']
+            )
+            fig_comparison.update_layout(
+                yaxis_title="Réduction (%)",
+                xaxis_title="Secteur"
+            )
+            st.plotly_chart(fig_comparison, use_container_width=True)
+
         else:
             st.info("Données par type de bâtiment non disponibles")
 
@@ -562,13 +690,13 @@ def display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees):
     with tab1:
         conso_df = pd.DataFrame(conso_par_vecteur, index=annees.astype(str))
         conso_df.index.name = "Année"
-        st.dataframe(conso_df.style.format("{:,.1f}"), use_container_width=True)
+        st.dataframe(conso_df.style.format("{:.1f}"), use_container_width=True)
     
     # Tableau des émissions
     with tab2:
         emissions_df = pd.DataFrame(emissions_par_vecteur, index=annees.astype(str))
         emissions_df.index.name = "Année"
-        st.dataframe(emissions_df.style.format("{:,.1f}"), use_container_width=True)
+        st.dataframe(emissions_df.style.format("{:.1f}"), use_container_width=True)
 
 def display_assumptions(heating_efficiency_map, electricity_carbone_factor, 
                        facteurs_carbone, annees):
@@ -677,7 +805,7 @@ def main():
         strategie = strategies[selected_strategy]
         scenario_temporelles = scenarios_temporelles[selected_scenario]
 
-        df_simulation, conso_par_vecteur, emissions_par_vecteur = simulate(
+        df_simulation, conso_par_vecteur, emissions_par_vecteur, conso_par_type_et_vecteur, emissions_par_type_et_vecteur = simulate(
             strategie,
             coverage_rates,
             scenario_temporelles,
@@ -692,7 +820,9 @@ def main():
         
         # Stocker résultats dans session pour réutilisation
         st.session_state.conso_par_vecteur = conso_par_vecteur
+        st.session_state.conso_par_type_et_vecteur = conso_par_type_et_vecteur
         st.session_state.emissions_par_vecteur = emissions_par_vecteur
+        st.session_state.emissions_par_type_et_vecteur = emissions_par_type_et_vecteur
         st.session_state.strategie = strategie
         st.session_state.scenario_temporelles = scenario_temporelles
         st.session_state.selected_com = selected_com
@@ -708,7 +838,9 @@ def main():
             and "scenario_temporelles" in st.session_state
         ):
             conso_par_vecteur = st.session_state.conso_par_vecteur
+            conso_par_type_et_vecteur = st.session_state.conso_par_type_et_vecteur
             emissions_par_vecteur = st.session_state.emissions_par_vecteur
+            emissions_par_type_et_vecteur = st.session_state.emissions_par_type_et_vecteur
             strategie = st.session_state.strategie
             scenario_temporelles = st.session_state.scenario_temporelles
             selected_com = st.session_state.selected_com
@@ -723,7 +855,8 @@ def main():
         emissions_par_vecteur, strategie, annees, scenario_temporelles
     )
     st.markdown("---") 
-    display_summary_metrics(df_simulation, conso_par_vecteur, emissions_par_vecteur)
+    display_summary_metrics(df_simulation, conso_par_vecteur, emissions_par_vecteur, 
+                            conso_par_type_et_vecteur, emissions_par_type_et_vecteur)
     st.markdown("---") 
     display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees)
     st.markdown("---")  # Séparateur visuel
