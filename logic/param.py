@@ -29,6 +29,7 @@ electricity_carbone_factor = [
 facteurs_carbone = {
     "électricité": electricity_carbone_factor,
     "gaz naturel": np.full(n_annees, 0.23),
+    "bio gaz": np.full(n_annees, 0.180),
     "fioul": np.full(n_annees, 0.300),
     "bois": np.full(n_annees, 0.025),
     "chauffage urbain": np.linspace(0.127, 0.079, n_annees),
