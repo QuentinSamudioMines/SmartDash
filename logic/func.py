@@ -470,7 +470,7 @@ def load_sample_data():
         "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0,0],
         "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0,0],
         "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0,0],
-        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","Bio Gaz"],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","bio gaz"],
         "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0,0.87],
         "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre","Autre"],
     })
