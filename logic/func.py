@@ -167,10 +167,16 @@ def simulate(df, coverage_by_group, scenario_temporel, vecteurs_energie, efficie
             if conso_vect_avant[source_vec] > 0:
                 ratio_res = conso_res[source_vec] / conso_vect_avant[source_vec]
                 ratio_tert = conso_tert[source_vec] / conso_vect_avant[source_vec]
-                
+
                 # Application de la substitution proportionnellement
                 delta_source = conso_vect[source_vec] - conso_vect_avant[source_vec]
-                delta_target = conso_vect[target_vec] - conso_vect_avant[target_vec]
+                # Remplacez la ligne 184 par :
+                delta_target = conso_vect.get(target_vec, 0.0) - conso_vect_avant.get(target_vec, 0.0)
+
+                if target_vec not in conso_res:
+                    conso_res[target_vec] = 0.0
+                if target_vec not in conso_tert:
+                    conso_tert[target_vec] = 0.0
                 
                 conso_res[source_vec] += delta_source * ratio_res
                 conso_res[target_vec] += delta_target * ratio_res
@@ -460,13 +466,13 @@ def load_sample_data():
 
     # Base part5
     part5 = pd.DataFrame({
-        "total_energy_consumption_basic": [0, 0, 0, 0, 0, 0],
-        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0],
-        "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0],
-        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0],
-        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique"],
-        "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0],
-        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre"],
+        "total_energy_consumption_basic": [0, 0, 0, 0, 0, 0,0],
+        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0,0],
+        "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0,0],
+        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0,0],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","Bio Gaz"],
+        "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0,0.87],
+        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre","Autre"],
     })
 
     # Liste pour stocker les duplications
