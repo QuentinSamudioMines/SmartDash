@@ -459,7 +459,7 @@ def load_sample_data():
     part4 = pd.read_pickle("city_part4.pkl")
 
     # Concaténation des parties principales
-    city = pd.concat([part1, part2, part3, part4], ignore_index=True)
+    city = pd.concat([part1, part2, part3, part4])
 
     # Liste des communes uniques
     communes = city['NOM_COM'].dropna().unique()
