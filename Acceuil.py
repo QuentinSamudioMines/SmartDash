@@ -144,7 +144,7 @@ Des améliorations restent possibles via une meilleure qualification des donnée
 
 ---
 
-### ⚠️ Limites et précautions d’interprétation
+#### ⚠️ Limites et précautions d’interprétation
 
 Les résultats doivent être interprétés avec prudence. Les simulations reposent sur des hypothèses statistiques et sur des bases de données territoriales parfois **incomplètes ou hétérogènes**.  
 Elles permettent de dégager des tendances robustes et d’identifier les principaux leviers, mais ne traduisent pas avec exactitude l’évolution réelle du parc immobilier.  
