@@ -130,14 +130,33 @@ with col2:
 st.markdown("""
 ### 🧾 Interprétation
 
-- Des écarts importants s’observent sur certaines IRIS, souvent liés à des **incertitudes sur la surface**, l’usage ou le système énergétique.
-- Le modèle a tendance à **surestimer** les consommations, en moyenne de **30 %**, avec un **écart type également d’environ 30 %** sur les deux catégories de bâtiments (logement et autres).
+- Des écarts importants s’observent sur certaines **IRIS**, souvent liés à des **incertitudes sur la surface**, l’usage ou le système énergétique.  
+- Le modèle a tendance à **surestimer les consommations**, en moyenne de **30 %**, avec un **écart type d’environ 30 %** sur les deux catégories de bâtiments (logement et autres).  
 
-Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**, qui repose sur des hypothèses prudentes (notamment pour le tertiaire) afin de ne pas sous-estimer les consommations réelles. %, ce qui montre une bonne cohérence globale du modèle.
+👉 Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**, qui repose sur des hypothèses prudentes (notamment pour le tertiaire) afin de ne pas sous-estimer les consommations réelles. Cela montre une bonne cohérence globale du modèle.  
 
-**Conclusion :** La validation montre que **SmartE** offre des estimations fiables à l’échelle territoriale, avec une **marge d’erreur acceptable pour un outil d’aide à la décision**. Des améliorations sont possibles via une meilleure qualification des données d'entrée.
+---
 
----""")
+### ✅ Conclusion
+
+La validation montre que **Smart-E** offre des estimations **fiables à l’échelle territoriale**, avec une **marge d’erreur acceptable pour un outil d’aide à la décision**.  
+Des améliorations restent possibles via une meilleure qualification des données d’entrée.  
+
+---
+
+### ⚠️ Limites et précautions d’interprétation
+
+Les résultats doivent être interprétés avec prudence. Les simulations reposent sur des hypothèses statistiques et sur des bases de données territoriales parfois **incomplètes ou hétérogènes**.  
+Elles permettent de dégager des tendances robustes et d’identifier les principaux leviers, mais ne traduisent pas avec exactitude l’évolution réelle du parc immobilier.  
+
+**Principales limites :**
+-  **Données incomplètes ou hétérogènes** : certaines informations (surfaces, systèmes énergétiques, état des bâtiments, type d'usage etc...) sont absentes ou non actualisées.  
+-  **Approche statistique** : Smart-E utilise des valeurs moyennes qui lissent la diversité réelle des situations.  
+-  **Incertitude des trajectoires à long terme** : usages, comportements d’occupation et rythme des rénovations restent difficiles à prédire à l’horizon 2050.  
+
+**En résumé :** les résultats doivent être considérés comme **des ordres de grandeur indicatifs** et **des trajectoires plausibles**, et non comme une projection parfaitement fidèle.  
+Smart-E éclaire la planification énergétique et climatique en mettant en évidence les écarts et priorités, mais ne remplace pas l’analyse fine de chaque site ni l’actualisation régulière des données disponibles.
+""")
 
 heating_efficiency_map = calculate_heating_efficiencies(load_sample_data())
 from logic.param import (
