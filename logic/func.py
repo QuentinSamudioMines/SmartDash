@@ -798,7 +798,7 @@ def create_dynamic_histogram(df, scenario_temporel, title="Distribution des cons
 def display_assumptions(heating_efficiency_map, electricity_carbone_factor, 
                        facteurs_carbone, annees):
     """Affiche la section des hypothèses et paramètres utilisés"""
-    st.header("🔎 Hypothèses et données de simulation")
+    st.header(" Hypothèses et données de simulation")
     
     # === ÉVOLUTION DES FACTEURS CARBONE ===
     st.subheader("Évolution des facteurs carbone (kgCO₂/kWh)")

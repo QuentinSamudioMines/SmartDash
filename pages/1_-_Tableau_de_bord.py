@@ -860,13 +860,13 @@ def main():
     st.markdown("---") 
     display_detailed_tables(conso_par_vecteur, emissions_par_vecteur, annees)
     st.markdown("---")  # Séparateur visuel
-    # Affichage des hypothèses et paramètres
-    display_assumptions(
-        heating_efficiency_map, 
-        electricity_carbone_factor, 
-        facteurs_carbone, 
-        annees
-    )
+    ## Affichage des hypothèses et paramètres
+    #display_assumptions(
+    #    heating_efficiency_map, 
+    #    electricity_carbone_factor, 
+    #    facteurs_carbone, 
+    #    annees
+    #)
 
 
 # ============================================================================
