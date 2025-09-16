@@ -805,10 +805,6 @@ def main():
         strategie = strategies[selected_strategy]
         scenario_temporelles = scenarios_temporelles[selected_scenario]
 
-        st.write(selected_strategy, strategie.head())
-        st.write(selected_scenario, scenario_temporelles)
-
-
         df_simulation, conso_par_vecteur, emissions_par_vecteur, conso_par_type_et_vecteur, emissions_par_type_et_vecteur = simulate(
             strategie,
             coverage_rates,
