@@ -42,17 +42,23 @@ def calculate_heating_efficiencies(df):
 
 def prepare_strategies(df):
     """Prépare les différentes stratégies de rénovation."""
+    # Tri par consommation par m²
     df_tri_m2 = df.copy()
     df_tri_m2["conso_m2"] = df_tri_m2["Consommation par m² par an (en kWh/m².an)_basic"]
     df_tri_m2 = df_tri_m2.sort_values(by="conso_m2", ascending=False).reset_index(drop=True)
 
-    df_tri_MWh = df.sort_values(by="total_energy_consumption_basic", ascending=False).reset_index(drop=True)
-    df_random = df.sample(frac=1, random_state=42).reset_index(drop=True)
+    # Tri par consommation totale
+    df_tri_MWh = df.copy()
+    df_tri_MWh = df_tri_MWh.sort_values(by="total_energy_consumption_basic", ascending=False).reset_index(drop=True)
+
+    # Stratégie aléatoire
+    df_random = df.copy()
+    df_random = df_random.sample(frac=1, random_state=42).reset_index(drop=True)
 
     return {
-        "Tri conso spécifique (kWh/m².an)": df_tri_m2,
-        "Tri conso annuelle (MWh/an)": df_tri_MWh,
-        "Ordre aléatoire": df_random,
+        "Consommation par m² (kWh/an)": df_tri_m2,         # clair et court
+        "Consommation totale (MWh/an)": df_tri_MWh,       # simple et direct
+        "Ordre aléatoire": df_random,              # reste simple
     }
 
 def calculate_energy_profile_by_sector(df, sector_column="energie_imope"):
@@ -106,8 +112,8 @@ def simulate(df, coverage_by_group, scenario_temporel, vecteurs_energie, efficie
     mask_tertiaire = df["UseType"] != "LOGEMENT" # adapte si besoin
 
     # Pré-calcule les index triés (pour stabilité dans le temps)
-    df_res_sorted = df[mask_res].sort_values(by="ID").reset_index(drop=True)
-    df_tert_sorted = df[mask_tertiaire].sort_values(by="ID").reset_index(drop=True)
+    df_res_sorted = df[mask_res].reset_index(drop=True)
+    df_tert_sorted = df[mask_tertiaire].reset_index(drop=True)
 
     n_res = len(df_res_sorted)
     n_tert = len(df_tert_sorted)
