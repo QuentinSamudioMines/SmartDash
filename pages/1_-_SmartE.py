@@ -157,31 +157,31 @@ def display_filtered_data_stats(city_data, usage_selection, selected_com):
     st.sidebar.markdown("---")
     with st.sidebar.expander("### 📊 Données filtrées", expanded=False):
         # Affichage du périmètre d'étude
-        st.sidebar.markdown("**Périmètre d'étude sélectionné :**")
-        st.sidebar.markdown(f"**Commune sélectionnée :** {selected_com}")
-        st.sidebar.markdown(f"**Type d'usage :** {usage_selection}")
+        st.markdown("**Périmètre d'étude sélectionné :**")
+        st.markdown(f"**Commune sélectionnée :** {selected_com}")
+        st.markdown(f"**Type d'usage :** {usage_selection}")
     
         # Affichage des métriques
-        st.sidebar.metric("Total bâtiments", total_buildings)
+        st.metric("Total bâtiments", total_buildings)
     
         # Détail par secteur selon la sélection
         if usage_selection == "Résidentiel + Tertiaire":
-            col1, col2 = st.sidebar.columns(2)
+            col1, col2 = st.columns(2)
             with col1:
                 st.metric("🏠 Résidentiel", residential_count)
             with col2:
                 st.metric("🏢 Tertiaire", tertiary_count)
         elif usage_selection == "Résidentiel":
-            st.sidebar.metric("🏠 Résidentiel", residential_count)
+            st.metric("🏠 Résidentiel", residential_count)
         elif usage_selection == "Tertiaire":
-            st.sidebar.metric("🏢 Tertiaire", tertiary_count)
+            st.metric("🏢 Tertiaire", tertiary_count)
         else:
-            st.sidebar.metric("🏛️ Public", public_count)
+            st.metric("🏛️ Public", public_count)
     
         # Calcul et affichage de la consommation totale
         original_profile = calculate_energy_profile_by_sector(city_data)
         total_consumption = sum([p['consommation_basic'] for p in original_profile.values()])
-        st.sidebar.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
+        st.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
 
 def setup_simulation_parameters():
     """Configure les paramètres de simulation dans la sidebar"""
