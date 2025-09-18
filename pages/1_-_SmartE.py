@@ -53,7 +53,7 @@ def setup_page_header():
         st.image("images/logo.png", width=140)
     
     with col_title:
-        st.title("SmartE - Étude de la transition énergétique du parc immobilier de la CUD")
+        st.title("Étude de la transition énergétique du parc immobilier de la CUD")
 
 def display_introduction():
     """Affiche la bannière d'introduction et les instructions d'utilisation"""
