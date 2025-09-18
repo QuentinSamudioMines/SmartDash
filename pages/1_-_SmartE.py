@@ -326,28 +326,30 @@ def setup_energy_substitution(original_profile, heating_efficiency_map):
     
     return st.session_state['substitutions']
 
-def display_results(conso_par_vecteur, 
-                   emissions_par_vecteur, df_selected, annees, scenario_data):
+def display_results(conso_par_vecteur, emissions_par_vecteur, df_selected, annees, scenario_data):
     """Affiche les résultats de la simulation"""
     st.subheader(f"Résultats pour la stratégie: {st.session_state['strategy_name']} - Scénario: {st.session_state['scenario_name']}")
-    
+
     # === GRAPHIQUES PRINCIPAUX ===
     st.subheader("Consommation et émissions annuelles")
     col1, col2 = st.columns(2)
-    
+
     with col1:
         fig_conso = create_consumption_chart(annees, conso_par_vecteur)
+        fig_conso.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
         st.plotly_chart(fig_conso, use_container_width=True)
-    
+
     with col2:
         fig_emissions = create_emissions_chart(annees, emissions_par_vecteur)
+        fig_emissions.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
         st.plotly_chart(fig_emissions, use_container_width=True)
-    
+
     # === NOUVEAU GRAPHIQUE DES ÉMISSIONS CUMULÉES ===
     st.subheader("Impact cumulé des rénovations sur les émissions")
     fig_cumulative = create_cumulative_emissions_chart(annees, emissions_par_vecteur, st.session_state['scenario_name'])
+    fig_cumulative.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
     st.plotly_chart(fig_cumulative, use_container_width=True)
-    
+
     # Explication de l'interprétation
     st.info("""
     **Comment interpréter ce graphique :**
@@ -355,11 +357,13 @@ def display_results(conso_par_vecteur,
     - Plus la courbe s'aplatit tôt, plus les réductions d'émissions sont précoces
     - Comparer différents scénarios pour voir l'impact du rythme de rénovation
     """)
-    
+
     # === DISTRIBUTION DES CONSOMMATIONS ===
     st.subheader("Distribution des consommations de chauffage du parc")
     fig_distribution = create_dynamic_histogram(df_selected, scenario_data)
+    fig_distribution.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
     st.plotly_chart(fig_distribution, use_container_width=True)
+
 
 def display_summary_metrics(city_data, conso_par_vecteur, emissions_par_vecteur, conso_par_type_and_vecteur, emissions_par_type_and_vecteur):
     """Affiche le bilan énergétique et carbone avec répartition par type de bâtiment et vecteur énergétique"""
