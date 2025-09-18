@@ -37,28 +37,28 @@ st.title("MAP 2050 : Modélisation énergétique des territoires")
 st.markdown("""
 Bienvenue sur l’**étude de la Communauté Urbaine de Dunkerque pour le projet MAP 2050**.
 
-Le **projet MAP 2050** est un projet de **recherche appliquée** qui s'inscrit dans le champ de la *Modélisation Énergétique Urbaine (UBEM)*. Son objectif est de **soutenir la planification énergétique et climatique des territoires** grâce à des outils de simulation adaptés.
+Cette étude est un projet de recherche qui s'inscrit dans le champ de la *Modélisation Énergétique Urbaine (UBEM)*. Son objectif est de **soutenir la planification énergétique et climatique des territoires** grâce à des outils de simulation adaptés.
 
 ---
 
 ###  Contexte et Problématique
 Dans le cadre de la transition énergétique et de la lutte contre le changement climatique, le secteur du bâtiment représente un levier d'action majeur. Les collectivités territoriales, en première ligne pour la mise en œuvre des politiques de rénovation énergétique, nécessitent des outils d'aide à la décision robustes pour orienter leurs stratégies à long terme.
 
-La *Modélisation Énergétique Urbaine* (UBEM) s'est imposée comme une approche scientifique de premier plan pour estimer et simuler la consommation énergétique du parc bâti à l'échelle d'une ville ou d'un quartier (Reinhart et al., 2013). Malgré un développement académique soutenu, le transfert de ces outils vers un usage opérationnel par les acteurs de la planification territoriale reste un défi majeur.
+La *Modélisation Énergétique Urbaine* (UBEM) est une approche scientifique de premier plan pour estimer et simuler la consommation énergétique du parc bâti à l'échelle d'une ville ou d'un quartier (Reinhart et al., 2013). Malgré un développement académique soutenu, le transfert de ces outils vers un usage opérationnel par les acteurs de la planification territoriale reste un défi majeur.
 
 ---
 
 ###  Le Projet MAP 2050
-Le projet de recherche appliquée MAP 2050 vise à identifier les avantages et limites des UBEM pour la planification énergétique par une mise en application sur un cas concret. En s'appuyant sur le cas d'étude de la Communauté Urbaine de Dunkerque, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
+Le projet MAP 2050 vise à identifier les avantages et limites des outils de planification énergétique par une mise en application sur un cas concret. En s'appuyant sur le cas d'étude de la Communauté Urbaine de Dunkerque, ce projet explore comment la modélisation peut éclairer les décisions publiques en matière de rénovation énergétique et de décarbonation du parc immobilier.
 
 ####  Objectifs du démonstrateur
 Cet outil a été conçu pour permettre aux utilisateurs de :
-- **Explorer et comparer des scénarios de transition énergétique** en faisant varier les stratégies de rénovation (rythme, profondeur) et les bouquets énergétiques.
+- **Explorer et comparer des scénarios de transition énergétique** en faisant varier les stratégies de rénovation (rythme, profondeur) et l'évolution de système de chauffage.
 - **Visualiser l'impact de ces scénarios** sur la consommation énergétique globale et les émissions de gaz à effet de serre à l'horizon 2050.
 - **Analyser la distribution des performances énergétiques** du parc immobilier et son évolution au fil du temps.
 
 ####  Conclusions
-Le démonstrateur illustre le type de résultats que l’on peut obtenir à partir de données publiques sur les bâtiments. Il montre l’apport des outils de simulation physique des bâtiments pour l’étude de scénarios avec quelques exemples, sans rechercher l’exhaustivité des potentialités offertes par l’outil. En revanche, la principale limite aujourd’hui est la fiabilité des données disponibles, notamment en ce qui concerne le parc de bâtiments tertiaires.
+Ce démonstrateur illustre le type de résultats que l’on peut obtenir à partir de données publiques sur les bâtiments. Il montre l’apport des outils de simulation physique des bâtiments pour l’étude de scénarios avec quelques exemples, sans rechercher l’exhaustivité des potentialités offertes par l’outil. En revanche, on note que la principale limite de cette approche aujourd’hui est la fiabilité des données disponibles, notamment en ce qui concerne le parc de bâtiments tertiaires.
 
 ---
 
@@ -89,11 +89,11 @@ st.markdown("""
 Les écarts observés sont jugés **acceptables** et confirment le bon fonctionnement du moteur physique de SmartE. Chaque cas représente un scénario spécifique de performance thermique :
 
 - **200** : Cas de base servant de référence, bâtiment simple avec infiltration standard.
-- **210** : Réduction des infiltrations d’air, amélioration de l’étanchéité.
-- **220** : Rénovation thermique de la toiture (amélioration de l’isolation supérieure).
-- **225** : Rénovation des murs (amélioration de l’isolation latérale).
-- **240** : Modification du scénario d’occupation (hausse ou baisse de présence humaine).
-- **250** : Pose de double vitrage (amélioration de la performance des menuiseries).
+- **210** : Réduction lié à l'amélioration de l’étanchéité et à la diminution des infiltrations d’air.
+- **220** : Réduction lié à la rénovation thermique de la toiture.
+- **225** : Réduction lié à la rénovation des murs.
+- **240** : Réduction lié à la modification du scénario d’occupation.
+- **250** : Réduction lié à la pose de double vitrage.
 
 Les résultats de SmartE se situent dans les marges acceptées par le protocole de test, démontrant que les effets thermiques induits par chaque modification sont bien représentés.
 
@@ -133,14 +133,14 @@ st.markdown("""
 - Des écarts importants s’observent sur certaines **IRIS**, souvent liés à des **incertitudes sur la surface**, l’usage ou le système énergétique.  
 - Le modèle a tendance à **surestimer les consommations**, en moyenne de **30 %**, avec un **écart type d’environ 30 %** sur les deux catégories de bâtiments (logement et autres).  
 
- Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**, qui repose sur des hypothèses prudentes (notamment pour le tertiaire) afin de ne pas sous-estimer les consommations réelles. Cela montre une bonne cohérence globale du modèle.  
-
+ Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**, qui repose sur des hypothèses prudentes afin de ne pas sous-estimer les consommations réelles. Cela montre une bonne cohérence globale du modèle.  
+ On note tout de même que la quantité de données de validation pour le tertiaire est plus limitée, ce qui peut diminuer la robustesse des conclusions pour ce secteur.
 ---
 
 ###  Conclusion
 
 La validation montre que **Smart-E** offre des estimations **fiables à l’échelle territoriale**, avec une **marge d’erreur acceptable pour un outil d’aide à la décision**.  
-Des améliorations restent possibles via une meilleure qualification des données d’entrée.  
+Des améliorations restent possibles via une meilleure qualification des données d’entrée. Des conclusions qualitatives lié au modèle prospectif restent un bon indicateur des tendances et leviers d’action.
 
 ####  Limites et précautions d’interprétation
 
