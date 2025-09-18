@@ -382,10 +382,18 @@ def create_consumption_chart(annees, conso_par_vecteur, title="Consommation par 
         ))
     
     fig.update_layout(
-        title=title,
+        title=dict(
+            text=title,
+            x=0.5,  # centré
+            xanchor="center",
+            yanchor="top"
+        ),
         xaxis_title="Année",
         yaxis_title="Consommation (MWh)",
         hovermode="x unified",
+        autosize=True,
+        margin=dict(l=40, r=40, b=40, t=80),  # marges suffisantes pour le titre
+        height=500
     )
     return fig
 
@@ -403,13 +411,21 @@ def create_emissions_chart(annees, emissions_par_vecteur, title="Émissions carb
         ))
     
     fig.update_layout(
-        title=title,
+        title=dict(
+            text=title,
+            x=0.5,  # centré horizontalement
+            xanchor="center",
+            yanchor="top"
+        ),
         xaxis_title="Année",
         yaxis_title="Émissions (tCO₂)",
         hovermode="x unified",
-        height=800
+        autosize=True,
+        margin=dict(l=40, r=40, b=40, t=80),  # marge haute suffisante
+        height=500
     )
     return fig
+
 
 def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_name):
     """Crée un graphique d'émissions cumulées avec effet de la rénovation"""
@@ -441,7 +457,7 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
         yaxis_title="Émissions cumulées (tonnes CO₂)",
         hovermode="x unified",
         legend_title="Type d'énergie",
-        height=800,
+        height=600
         annotations=[
             dict(
                 text="Plus la courbe est plate, plus les réductions d'émissions sont importantes",
