@@ -426,7 +426,6 @@ def create_emissions_chart(annees, emissions_par_vecteur, title="Émissions carb
     )
     return fig
 
-
 def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_name):
     """Crée un graphique d'émissions cumulées avec effet de la rénovation"""
     
@@ -452,19 +451,26 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
     
     # Mise en forme du graphique
     fig.update_layout(
-        title=f"Émissions cumulées de CO₂ (2024-2050) - Scénario {scenario_name}",
+        title=dict(
+            text=f"Émissions cumulées de CO₂ (2024-2050) - Scénario {scenario_name}",
+            x=0.5,  # centré
+            xanchor="center",
+            yanchor="top"
+        ),
         xaxis_title="Année",
         yaxis_title="Émissions cumulées (tonnes CO₂)",
         hovermode="x unified",
         legend_title="Type d'énergie",
+        autosize=True,
+        margin=dict(l=40, r=40, b=40, t=80),  # marge haute pour ne pas couper le titre
         height=600,
         annotations=[
             dict(
                 text="Plus la courbe est plate, plus les réductions d'émissions sont importantes",
                 xref="paper", yref="paper",
-                x=0.5, y=1.1,
+                x=0.5, y=1.08,  # placé juste sous le titre
                 showarrow=False,
-                font=dict(size=10)
+                font=dict(size=10, color="gray")
             )
         ]
     )
