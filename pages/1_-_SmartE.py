@@ -337,17 +337,20 @@ def display_results(conso_par_vecteur, emissions_par_vecteur, df_selected, annee
     with col1:
         fig_conso = create_consumption_chart(annees, conso_par_vecteur)
         fig_conso.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
+        fig_conso.update_layout(width=None, height=400)  # Fixed height, responsive width
         st.plotly_chart(fig_conso, use_container_width=True)
 
     with col2:
         fig_emissions = create_emissions_chart(annees, emissions_par_vecteur)
         fig_emissions.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
+        fig_emissions.update_layout(width=None, height=400)  # Fixed height, responsive width
         st.plotly_chart(fig_emissions, use_container_width=True)
 
     # === NOUVEAU GRAPHIQUE DES ÉMISSIONS CUMULÉES ===
     st.subheader("Impact cumulé des rénovations sur les émissions")
     fig_cumulative = create_cumulative_emissions_chart(annees, emissions_par_vecteur, st.session_state['scenario_name'])
     fig_cumulative.update_layout(autosize=True, margin=dict(l=0, r=0, b=0, t=0))
+    fig_cumulative.update_layout(width=None, height=400)  # Fixed height, responsive width
     st.plotly_chart(fig_cumulative, use_container_width=True)
 
     # Explication de l'interprétation
