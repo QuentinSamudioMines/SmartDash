@@ -463,16 +463,7 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
         legend_title="Type d'énergie",
         autosize=True,
         margin=dict(l=40, r=40, b=40, t=80),  # marge haute pour ne pas couper le titre
-        height=600,
-        annotations=[
-            dict(
-                text="Plus la courbe est plate, plus les réductions d'émissions sont importantes",
-                xref="paper", yref="paper",
-                x=0.5, y=1.08,  # placé juste sous le titre
-                showarrow=False,
-                font=dict(size=10, color="gray")
-            )
-        ]
+        height=600
     )
     
     return fig
