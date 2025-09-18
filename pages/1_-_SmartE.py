@@ -154,36 +154,36 @@ def display_filtered_data_stats(city_data, usage_selection, selected_com):
     city_public = filtre_forme_juridique(city_data, formes_juridiques)
     public_count = len(city_public)
     total_buildings = len(city_data)
+    with st.sidebar.expander("🏗️ Taux de rénovation par type global", expanded=False):
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("### 📊 Données filtrées")
     
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 📊 Données filtrées")
+        # Affichage du périmètre d'étude
+        st.sidebar.markdown("**Périmètre d'étude sélectionné :**")
+        st.sidebar.markdown(f"**Commune sélectionnée :** {selected_com}")
+        st.sidebar.markdown(f"**Type d'usage :** {usage_selection}")
     
-    # Affichage du périmètre d'étude
-    st.sidebar.markdown("**Périmètre d'étude sélectionné :**")
-    st.sidebar.markdown(f"**Commune sélectionnée :** {selected_com}")
-    st.sidebar.markdown(f"**Type d'usage :** {usage_selection}")
+        # Affichage des métriques
+        st.sidebar.metric("Total bâtiments", total_buildings)
     
-    # Affichage des métriques
-    st.sidebar.metric("Total bâtiments", total_buildings)
+        # Détail par secteur selon la sélection
+        if usage_selection == "Résidentiel + Tertiaire":
+            col1, col2 = st.sidebar.columns(2)
+            with col1:
+                st.metric("🏠 Résidentiel", residential_count)
+            with col2:
+                st.metric("🏢 Tertiaire", tertiary_count)
+        elif usage_selection == "Résidentiel":
+            st.sidebar.metric("🏠 Résidentiel", residential_count)
+        elif usage_selection == "Tertiaire":
+            st.sidebar.metric("🏢 Tertiaire", tertiary_count)
+        else:
+            st.sidebar.metric("🏛️ Public", public_count)
     
-    # Détail par secteur selon la sélection
-    if usage_selection == "Résidentiel + Tertiaire":
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            st.metric("🏠 Résidentiel", residential_count)
-        with col2:
-            st.metric("🏢 Tertiaire", tertiary_count)
-    elif usage_selection == "Résidentiel":
-        st.sidebar.metric("🏠 Résidentiel", residential_count)
-    elif usage_selection == "Tertiaire":
-        st.sidebar.metric("🏢 Tertiaire", tertiary_count)
-    else:
-        st.sidebar.metric("🏛️ Public", public_count)
-    
-    # Calcul et affichage de la consommation totale
-    original_profile = calculate_energy_profile_by_sector(city_data)
-    total_consumption = sum([p['consommation_basic'] for p in original_profile.values()])
-    st.sidebar.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
+        # Calcul et affichage de la consommation totale
+        original_profile = calculate_energy_profile_by_sector(city_data)
+        total_consumption = sum([p['consommation_basic'] for p in original_profile.values()])
+        st.sidebar.metric("Consommation totale", f"{total_consumption:.0f} MWh/an")
 
 def setup_simulation_parameters():
     """Configure les paramètres de simulation dans la sidebar"""
