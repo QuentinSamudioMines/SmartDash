@@ -457,7 +457,7 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
         yaxis_title="Émissions cumulées (tonnes CO₂)",
         hovermode="x unified",
         legend_title="Type d'énergie",
-        height=600
+        height=600,
         annotations=[
             dict(
                 text="Plus la courbe est plate, plus les réductions d'émissions sont importantes",
