@@ -386,7 +386,6 @@ def create_consumption_chart(annees, conso_par_vecteur, title="Consommation par 
         xaxis_title="Année",
         yaxis_title="Consommation (MWh)",
         hovermode="x unified",
-        height=800
     )
     return fig
 
