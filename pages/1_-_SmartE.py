@@ -154,10 +154,8 @@ def display_filtered_data_stats(city_data, usage_selection, selected_com):
     city_public = filtre_forme_juridique(city_data, formes_juridiques)
     public_count = len(city_public)
     total_buildings = len(city_data)
-    with st.sidebar.expander("🏗️ Taux de rénovation par type global", expanded=False):
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("### 📊 Données filtrées")
-    
+    st.sidebar.markdown("---")
+    with st.sidebar.expander("### 📊 Données filtrées", expanded=False):
         # Affichage du périmètre d'étude
         st.sidebar.markdown("**Périmètre d'étude sélectionné :**")
         st.sidebar.markdown(f"**Commune sélectionnée :** {selected_com}")
