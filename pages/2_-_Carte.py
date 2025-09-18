@@ -390,7 +390,7 @@ def main():
         st.stop()
     
     # Optimisation pour l'affichage
-    display_gdf = optimize_data_for_display(display_gdf)
+    display_gdf = optimize_data_for_display(display_gdf, max_buildings=300000)
     
     # === AFFICHAGE DES STATISTIQUES ===
     display_statistics(display_gdf, selected_year)
