@@ -468,6 +468,36 @@ def create_cumulative_emissions_chart(annees, emissions_par_vecteur, scenario_na
     
     return fig
 
+def add_energie_types(communes):
+    """
+    Construit le DataFrame part5 pour une ou plusieurs communes.
+    
+    Args:
+        communes (list[str]): liste des noms de communes
+    
+    Returns:
+        pd.DataFrame: lignes part5 associées aux communes
+    """
+    base = pd.DataFrame({
+        "total_energy_consumption_basic": [0, 0, 0, 0, 0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0, 0],
+        "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0, 0],
+        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0, 0],
+        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique",
+                          "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "bio gaz"],
+        "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0, 0.87],
+        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre", "Autre"],
+    })
+
+    duplicated = []
+    for com in communes:
+        temp = base.copy()
+        temp["NOM_COM"] = com
+        duplicated.append(temp)
+
+    return pd.concat(duplicated, ignore_index=True)
+
+
 @st.cache_data
 def load_sample_data():
     """Charge et concatène les parties du fichier city_file, en ajoutant part5 pour chaque commune."""
@@ -479,36 +509,11 @@ def load_sample_data():
     # Concaténation des parties principales
     city = pd.concat([part1, part2, part3, part4])
 
-    # Liste des communes uniques
+    # Ajout de part5 pour toutes les communes
     communes = city['NOM_COM'].dropna().unique()
+    part5_full = add_energie_types(communes)
 
-    # Base part5
-    part5 = pd.DataFrame({
-        "total_energy_consumption_basic": [0, 0, 0, 0, 0, 0,0],
-        "Consommation par m² par an (en kWh/m².an)_basic": [0, 0, 0, 0, 0, 0,0],
-        "total_energy_consumption_renovated": [0, 0, 0, 0, 0, 0,0],
-        "Consommation par m² par an (en kWh/m².an)_renovated": [0, 0, 0, 0, 0, 0,0],
-        "energie_imope": ["PAC Air-Air", "PAC Air-Eau", "PAC Géothermique", "PAC Air-Air", "PAC Air-Eau", "PAC Géothermique","bio gaz"],
-        "heating_efficiency": [3.0, 4.0, 5.0, 3.0, 4.0, 5.0,0.87],
-        "UseType": ["LOGEMENT", "LOGEMENT", "LOGEMENT", "Autre", "Autre", "Autre","Autre"],
-    })
-
-    # Liste pour stocker les duplications
-    part5_duplicated_list = []
-
-    for com in communes:
-        # Dupliquer part5 et assigner la commune
-        temp = part5.copy()
-        temp['NOM_COM'] = com
-        part5_duplicated_list.append(temp)
-
-    # Concaténer toutes les duplications de part5
-    part5_full = pd.concat(part5_duplicated_list, ignore_index=True)
-
-    # Concaténer avec le dataframe principal
-    city_full = pd.concat([city, part5_full], ignore_index=True)
-
-    return city_full
+    return pd.concat([city, part5_full], ignore_index=True)
 
 
 def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, selected_com: bool = False):
@@ -523,14 +528,15 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, sele
     Returns:
         pd.DataFrame: Données filtrées
     """
-    
-    # Filtre CUD si demandé (supposant qu'il existe une colonne 'is_cud' ou similaire)
+    # Filtre sur la commune
     if selected_com != "Toutes les communes":
         filtered_data = city_data[city_data["NOM_COM"] == selected_com]
+        communes = [selected_com]
     else:
         filtered_data = city_data.copy()
-    
-    # Filtre par type d'usage
+        communes = city_data["NOM_COM"].dropna().unique()
+
+    # Filtre usage
     if usage_selection == "Résidentiel":
         filtered_data = filtered_data[filtered_data["UseType"] == "LOGEMENT"]
     elif usage_selection == "Tertiaire":
@@ -539,6 +545,10 @@ def filter_data_by_selection(city_data: pd.DataFrame, usage_selection: str, sele
         pass
     else:
         filtered_data =  filtre_forme_juridique(filtered_data, ["COMU"])#, "COM", "CCOM"])#,"CCAS", "COAG", "COLL",  "DEPT", "EP", "EPA", "EPIC", "ETAT"]) # Filtre invalide
+        # Ajout de part5 correspondant aux communes sélectionnées
+    part5_full = add_energie_types(communes)
+    filtered_data = pd.concat([filtered_data, part5_full], ignore_index=True)
+
     return filtered_data
     
 def filtre_forme_juridique(
