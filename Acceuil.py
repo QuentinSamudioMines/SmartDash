@@ -20,13 +20,13 @@ from logic.func import calculate_heating_efficiencies, display_assumptions, load
 # Configuration de la page
 if os.path.exists("images/logo.png"):
     st.set_page_config(
-        page_title="SmartE - MAP 2050 Project",
+        page_title="SmartE - Projet MAP 2050",
         page_icon="images/logo.png",
         layout="wide"
     )
 else:
     st.set_page_config(
-        page_title="SmartE - MAP 2050 Project",
+        page_title="SmartE - Projet MAP 2050",
         layout="wide"
     )
 
