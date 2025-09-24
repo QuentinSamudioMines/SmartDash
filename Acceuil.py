@@ -130,11 +130,14 @@ with col2:
 st.markdown("""
 ###  Interprétation
 
-- Des écarts importants s’observent sur certaines **IRIS**, souvent liés à des **incertitudes sur la surface**, l’usage ou le système énergétique.  
-- Le modèle a tendance à **surestimer les consommations**, en moyenne de **30 %**, avec un **écart type d’environ 30 %** sur les deux catégories de bâtiments (logement et autres).  
+- Des écarts importants s’observent sur certaines **IRIS**, souvent liés à des incertitudes sur la surface, l’usage ou le système énergétique.  
+- Le modèle a tendance à **surestimer les consommations**, en moyenne de **30 %**, avec un écart type d’environ 30 % sur les deux catégories de bâtiments (logement et autres).  
 
- Cette **surconsommation est intrinsèque à notre méthode de paramétrisation**, qui repose sur des hypothèses prudentes afin de ne pas sous-estimer les consommations réelles. Cela montre une bonne cohérence globale du modèle.  
+            
+ Cette surconsommation est intrinsèque à notre méthode de paramétrisation, qui repose sur des hypothèses prudentes afin de ne pas sous-estimer les consommations réelles. Cela montre une bonne cohérence globale du modèle.  
  On note tout de même que la quantité de données de validation pour le tertiaire est plus limitée, ce qui peut diminuer la robustesse des conclusions pour ce secteur.
+
+            
 ---
 
 ###  Conclusion
