@@ -36,13 +36,13 @@ facteurs_carbone = {
     # ── Combustibles ────────────────────────────────────────────────────────
     # Source : Base Empreinte ADEME (base-empreinte.ademe.fr)
     "électricité":    electricity_carbone_factor,          # 0.0521 → ~0.013
-    "gaz naturel":    np.full(n_annees, 0.227),            # ADEME : 227 gCO2e/kWh
-    "bio gaz":        np.full(n_annees, 0.0441),           # ADEME ACV 2020 : 44.1 gCO2e/kWh
-    "fioul":          np.full(n_annees, 0.324),            # ADEME : 324 gCO2e/kWh
-    "bois":           np.full(n_annees, 0.030),            # ADEME : 30 gCO2e/kWh
+    "gaz naturel":    np.full(n_annees, 0.0.215),            # ADEME : 227 gCO2e/kWh
+    "bio gaz":        np.full(n_annees, 0.0417),           # ADEME ACV 2020 : 44.1 gCO2e/kWh
+    "fioul":          np.full(n_annees, 0.3248),            # ADEME : 324 gCO2e/kWh
+    "bois":           np.full(n_annees, 0.016),            # ADEME : 30 gCO2e/kWh
     # Chauffage urbain : moyenne nationale ACV ~0.129, émissions directes ~0.101
     # Hypothèse de décarbonation progressive des réseaux (objectif label < 50 gCO2/kWh)
-    "chauffage urbain": np.linspace(0.129, 0.050, n_annees),
+    "chauffage urbain": np.linspace(0.14, 0.050, n_annees),
     "autre":          np.full(n_annees, 0.150),            # valeur par défaut conservative
     "mixte":          np.full(n_annees, 0.100),            # valeur par défaut
 
