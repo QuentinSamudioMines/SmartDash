@@ -34,9 +34,9 @@ COP_GEO       = 4.0
 
 facteurs_carbone = {
     # ── Combustibles ────────────────────────────────────────────────────────
-    # Source : Base Empreinte ADEME (base-empreinte.ademe.fr)
+    # Source : Base Empreinte ADEME (https://base-empreinte.ademe.fr/donnees/jeu-donnees)
     "électricité":    electricity_carbone_factor,          # 0.0521 → ~0.013
-    "gaz naturel":    np.full(n_annees, 0.0.215),            # ADEME : 227 gCO2e/kWh
+    "gaz naturel":    np.full(n_annees, 0.215),            # ADEME : 227 gCO2e/kWh
     "bio gaz":        np.full(n_annees, 0.0417),           # ADEME ACV 2020 : 44.1 gCO2e/kWh
     "fioul":          np.full(n_annees, 0.3248),            # ADEME : 324 gCO2e/kWh
     "bois":           np.full(n_annees, 0.016),            # ADEME : 30 gCO2e/kWh
