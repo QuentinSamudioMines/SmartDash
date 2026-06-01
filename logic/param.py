@@ -16,7 +16,7 @@ scenarios_temporelles = {
 }
 
 # Facteurs carbone dynamiques (kgCO₂/kWh)
-electricity_carbone_factor = [
+electricity_carbone_factor = np.array([
     0.045511605,
     0.043359175, 0.041206744, 0.039054314, 0.036901883, 0.034749453,
     0.032597022, 0.030700969, 0.028804917, 0.026908864, 0.025012811,
@@ -24,19 +24,32 @@ electricity_carbone_factor = [
     0.013636495, 0.013559714, 0.013482933, 0.013406151, 0.01332937,
     0.013252589, 0.013175808, 0.013099027, 0.013022245, 0.012945464,
     0.012868683
-]
+])
+
+# COP typiques pour le calcul PAC (kWh thermique / kWh élec)
+COP_AIR_AIR   = 3.0
+COP_AIR_EAU   = 2.7
+COP_EAU_EAU   = 3.5
+COP_GEO       = 4.0
 
 facteurs_carbone = {
-    "électricité": electricity_carbone_factor,
-    "gaz naturel": np.full(n_annees, 0.23),
-    "bio gaz": np.full(n_annees, 0.180),
-    "fioul": np.full(n_annees, 0.300),
-    "bois": np.full(n_annees, 0.025),
-    "chauffage urbain": np.linspace(0.127, 0.079, n_annees),
-    "autre": np.full(n_annees, 0.150),
-    "mixte": np.full(n_annees, 0.100),
-    "PAC Air-Air": electricity_carbone_factor,
-    "PAC Air-Eau": electricity_carbone_factor,
-    "PAC Eau-Eau": electricity_carbone_factor,
-    "PAC Géothermique": electricity_carbone_factor,
+    # ── Combustibles ────────────────────────────────────────────────────────
+    # Source : Base Empreinte ADEME (base-empreinte.ademe.fr)
+    "électricité":    electricity_carbone_factor,          # 0.0521 → ~0.013
+    "gaz naturel":    np.full(n_annees, 0.227),            # ADEME : 227 gCO2e/kWh
+    "bio gaz":        np.full(n_annees, 0.0441),           # ADEME ACV 2020 : 44.1 gCO2e/kWh
+    "fioul":          np.full(n_annees, 0.324),            # ADEME : 324 gCO2e/kWh
+    "bois":           np.full(n_annees, 0.030),            # ADEME : 30 gCO2e/kWh
+    # Chauffage urbain : moyenne nationale ACV ~0.129, émissions directes ~0.101
+    # Hypothèse de décarbonation progressive des réseaux (objectif label < 50 gCO2/kWh)
+    "chauffage urbain": np.linspace(0.129, 0.050, n_annees),
+    "autre":          np.full(n_annees, 0.150),            # valeur par défaut conservative
+    "mixte":          np.full(n_annees, 0.100),            # valeur par défaut
+
+    # ── Pompes à chaleur (émissions indirectes = élec / COP) ────────────────
+    # Source : ADEME — les PAC émettent via leur consommation électrique
+    "PAC Air-Air":      electricity_carbone_factor / COP_AIR_AIR,
+    "PAC Air-Eau":      electricity_carbone_factor / COP_AIR_EAU,
+    "PAC Eau-Eau":      electricity_carbone_factor / COP_EAU_EAU,
+    "PAC Géothermique": electricity_carbone_factor / COP_GEO,
 }
